@@ -23,6 +23,7 @@ else:
 
 pygame.display.set_caption('World')
 
+
 fps = 60
 clock = pygame.time.Clock()
 
