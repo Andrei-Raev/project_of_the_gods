@@ -99,8 +99,8 @@ class Sand(Landscape):
 # -------------------
 
 class World:  # Класс мира
-    def __init__(self):
-        pass
+    def __init__(self, world_seed):
+        self.world_seed=world_seed
 
 
 class Chunk:  # Класс чанка мира
