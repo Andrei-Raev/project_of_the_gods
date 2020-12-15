@@ -1,4 +1,4 @@
-class obekt:
+class Obekt:
     def __init__(self, y, x, preor=3):
         self.y = y
         self.x = x
@@ -17,25 +17,19 @@ class obekt:
         return (self.y, self.x)
 
 
-class relef(obekt):
+class relef(Obekt):
     def __init__(self, y, x, preor=3):
-        self.y = y
-        self.x = x
-        self.preor = preor
+        super().__init__(y, x, preor)
 
 
-class poctr(obekt):
+class poctr(Obekt):
     def __init__(self, y, x, preor=2):
-        self.y = y
-        self.x = x
-        self.preor = preor
+        super().__init__(y, x, preor)
 
 
-class entiti(obekt):
+class entiti(Obekt):
     def __init__(self, y, x, hp, preor=1):
-        self.y = y
-        self.x = x
-        self.preor = preor
+        super().__init__(y, x, preor)
         self.hp = hp
 
     def get_hp(self):
