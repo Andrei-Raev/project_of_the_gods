@@ -41,16 +41,57 @@ def render_scale(val: int):
 # |   Блоки   |
 # -------------
 
-class Block:
-    def __init__(self, cord: tuple, t: int):
-        self.cord = tuple(cord)
-        self.type = int(t)
+TYPE_BLOCKS = {1: 'grass', 2: 'stone', 3: 'sand'}
+
+
+class Obekt:
+    def __init__(self, cord: tuple, preor=0):
+        self.cord = cord
+        self.importance = preor
+
+    def get_x(self) -> int:
+        return int(self.cord[0])
+
+    def get_y(self) -> int:
+        return int(self.cord[1])
+
+    def get_preor(self) -> int:
+        return int(self.importance)
 
     def get_cord(self) -> tuple:
-        return self.cord
+        return tuple(self.cord)
 
-    def get_type(self) -> int:
-        return self.type
+
+class Landscape(Obekt):
+    def __init__(self, cord: tuple, importance=1):
+        super().__init__(cord, importance)
+
+
+class Grass(Landscape):
+    def __init__(self, cord: tuple, importance=1):
+        super().__init__(cord, importance)
+
+    @staticmethod
+    def get_type() -> int:
+        return 1
+
+
+class Stone(Landscape):
+    def __init__(self, cord: tuple, importance=1):
+        super().__init__(cord, importance)
+
+    @staticmethod
+    def get_type() -> int:
+        return 2
+
+
+class Sand(Landscape):
+    def __init__(self, cord: tuple, importance=1):
+        super().__init__(cord, importance)
+
+    @staticmethod
+    def get_type() -> int:
+        return 3
 
 
 # -------------------
@@ -62,23 +103,6 @@ class World:  # Класс мира
         pass
 
 
-def global_render_chunk(board):
-    ground = pygame.Surface((1020, 1020))
-    for i in board['landscape']:
-        t = i.get_type()
-        if t == 1:
-            block = pygame.image.load('grass.png').convert()
-        elif t == 2:
-            block = pygame.image.load('stone.png').convert()
-        else:
-            block = pygame.image.load('sand.png').convert()
-        cord = i.get_cord()
-        block_rect = block.get_rect(topleft=(tuple([j * 32 for j in cord])))
-        ground.blit(block, block_rect)
-
-    return ground
-
-
 class Chunk:  # Класс чанка мира
     def __init__(self, seed: int, cord: (int, int)):
         self.seed = seed
@@ -87,7 +111,7 @@ class Chunk:  # Класс чанка мира
         self.board = {'landscape': set(), 'buildings': {}, 'mechanisms': {}, 'entities': {}}
         self.ground = pygame.Surface((1020, 1020))
 
-        self.blocks = [pygame.image.load('grass.png').convert(), pygame.image.load('stone.png').convert(),
+        self.blocks = [pygame.image.load('none.jpg').convert(), pygame.image.load('grass.png').convert(), pygame.image.load('stone.png').convert(),
                        pygame.image.load('sand.png').convert()]
 
     def generate_сhunk(self) -> None:
@@ -96,7 +120,7 @@ class Chunk:  # Класс чанка мира
         self.board = {'landscape': set(), 'buildings': {}, 'mechanisms': {}, 'entities': {}}
         for y in range(32):
             for x in range(32):
-                self.board['landscape'].add(Block((x, y), random.randint(0, 2)))
+                self.board['landscape'].add([Grass((x, y)), Stone((x, y)), Sand((x, y))][random.randint(0, 2)])
 
     def render_chunk(self) -> None:
         del self.ground
