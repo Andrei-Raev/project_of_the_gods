@@ -6,7 +6,7 @@ from math import sin, cos
 
 pygame.init()
 
-fullscreen = bool(input())
+fullscreen = True
 
 if fullscreen:
     size = width, height = get_monitors()[0].width, get_monitors()[0].height
@@ -19,39 +19,8 @@ else:
 
 pygame.display.set_caption('test')
 
-# print(pygame.display.Info())
-
-# size = width, height = int(640 * COF), int(360 * COF)
-
-
 fps = 60
 clock = pygame.time.Clock()
-
-
-class Camera(object):
-    def __init__(self, camera_func, width, height):
-        self.camera_func = camera_func
-        self.state = pygame.Rect(0, 0, width, height)
-
-    def apply(self, target):
-        return target.rect.move(self.state.topleft)
-
-    def update(self, target):
-        self.state = self.camera_func(self.state, target.rect)
-
-
-def camera_configure(camera, target_rect):
-    global width, height
-    l, t, _, _ = target_rect
-    _, _, w, h = camera
-    l, t = -l + width / 2, -t + height / 2
-
-    l = min(0, l)  # Не движемся дальше левой границы
-    l = max(-(camera.width - width), l)  # Не движемся дальше правой границы
-    t = max(-(camera.height - height), t)  # Не движемся дальше нижней границы
-    t = min(0, t)  # Не движемся дальше верхней границы
-
-    return pygame.Rect(l, t, w, h)
 
 
 def gradient(col, col2, cof):
@@ -149,8 +118,8 @@ def main_menu():
     b = MainMenuButton(2, 'Настройки')
     c = MainMenuButton(3, 'Выход')
     c.set_on_click(exits, 1)
-    bg_surf = pygame.image.load("bg-mainmenu.png").convert()
-    bg_surf.set_colorkey((0, 0, 0))
+    bg_surf = pygame.image.load("bg-mainmenu.png").convert_alpha()
+    # bg_surf.set_colorkey((0, 0, 0))
     bg_surf.set_alpha(200)
     bg_surf = pygame.transform.scale(bg_surf, (int(1000 * COF), int(1000 * COF)))
 
@@ -175,14 +144,15 @@ def main_menu():
 
         count += 1
 
-        if count % 5 == 0:
-
-            move = [i - render_scale(2) for i in move]
-            move2 = [i - render_scale(1) for i in move2]
+        if count % 2 == 0:
+            move = [i - render_scale(1) for i in move]
 
             for i, j in enumerate(move):
                 if j < -(width // 2):
                     move[i] = width // 2 + width
+
+        if count % 5 == 0:
+            move2 = [i - render_scale(1) for i in move2]
 
             for i, j in enumerate(move2):
                 if j < -(width // 2):
@@ -203,8 +173,6 @@ def main_menu():
         clock.tick(fps)
         pygame.display.flip()
 
-
-camera = Camera(camera_configure, 1000, 1000)
 
 aa = False
 if __name__ == '__main__':
