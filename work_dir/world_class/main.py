@@ -17,7 +17,7 @@ if fullscreen:
     COF = width / 640
     screen = pygame.display.set_mode(size, pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.FULLSCREEN)
 else:
-    COF = 2
+    COF = 2.1
     size = width, height = int(640 * COF), int(360 * COF)
     screen = pygame.display.set_mode(size)
 
@@ -54,7 +54,6 @@ class World:  # Класс мира
         pass
 
 
-
 def global_render_chunk(board):
     ground = pygame.Surface((1020, 1020))
     for i in board['landscape']:
@@ -69,7 +68,6 @@ def global_render_chunk(board):
         block_rect = block.get_rect(topleft=(tuple([j * 32 for j in cord])))
         ground.blit(block, block_rect)
 
-
     return ground
 
 
@@ -81,7 +79,8 @@ class Chunk:  # Класс чанка мира
         self.board = {'landscape': set(), 'buildings': {}, 'mechanisms': {}, 'entities': {}}
         self.ground = pygame.Surface((1020, 1020))
 
-        self.blocks = [pygame.image.load('grass.png').convert(), pygame.image.load('stone.png').convert(), pygame.image.load('sand.png').convert()]
+        self.blocks = [pygame.image.load('grass.png').convert(), pygame.image.load('stone.png').convert(),
+                       pygame.image.load('sand.png').convert()]
 
     def generate_сhunk(self) -> None:
         random.seed(self.seed)
@@ -90,7 +89,6 @@ class Chunk:  # Класс чанка мира
         for y in range(32):
             for x in range(32):
                 self.board['landscape'].add(Block((x, y), random.randint(0, 2)))
-
 
     def render_chunk(self) -> None:
         del self.ground
@@ -106,6 +104,7 @@ class Chunk:  # Класс чанка мира
         return self.ground
 
 
+
 aa = False
 map_c = [0, 0]
 tmp = Chunk(1, (0, 0))
@@ -113,7 +112,7 @@ tmp.generate_сhunk()
 tmp.render_chunk()
 
 start_time_m = time.time()
-for _ in range(10):
+for _ in range(0):
     start_time = time.time()
     tmp.seed = tmp.seed + 1
     tmp.generate_сhunk()
