@@ -1,3 +1,4 @@
+import time
 from copy import copy
 from screeninfo import get_monitors
 
@@ -6,7 +7,7 @@ from math import sin, cos
 
 pygame.init()
 
-fullscreen = True
+fullscreen = bool(input())
 
 if fullscreen:
     size = width, height = get_monitors()[0].width, get_monitors()[0].height
@@ -132,18 +133,24 @@ def main_menu():
     start = None
     count = 0
     while in_menu:
+
+
         screen.fill((0, 0, 0))
         bg_rect = bg_surf.get_rect(center=(move[0], height // 2))
         bg_rect2 = bg_surf.get_rect(center=(move[1], height // 2))
         bg_rect1_1 = bg_surf2.get_rect(center=(move2[0], height // 2 - render_scale(6)))
         bg_rect1_2 = bg_surf2.get_rect(center=(move2[1], height // 2 + render_scale(6)))
+
+        start_time = time.time()
         screen.blit(bg_surf2, bg_rect1_1)
         screen.blit(bg_surf2, bg_rect1_2)
         screen.blit(bg_surf, bg_rect)
         screen.blit(bg_surf, bg_rect2)
-
+        print("--- %s seconds ---" % (time.time() - start_time))
+        print(COF)
         count += 1
-
+        if count >= 1000000:
+            count = 0
         if count % 2 == 0:
             move = [i - render_scale(1) for i in move]
 
@@ -172,6 +179,7 @@ def main_menu():
 
         clock.tick(fps)
         pygame.display.flip()
+
 
 
 aa = False
