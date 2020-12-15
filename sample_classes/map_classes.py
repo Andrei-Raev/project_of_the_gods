@@ -1,41 +1,63 @@
+TYPE_BLOCKS = {1: 'grass', 2: 'stone', }
+
+
 class Obekt:
-    def __init__(self, y, x, preor=3):
-        self.y = y
-        self.x = x
-        self.preor = preor
+    def __init__(self, cord: tuple, preor=0):
+        self.cord = cord
+        self.importance = preor
 
-    def get_x(self):
-        return self.x
+    def get_x(self) -> int:
+        return int(self.cord[0])
 
-    def get_y(self):
-        return self.y
+    def get_y(self) -> int:
+        return int(self.cord[1])
 
-    def get_preor(self):
-        return self.preor
+    def get_preor(self) -> int:
+        return int(self.importance)
 
-    def get_pos(self):
-        return (self.y, self.x)
-
-
-class relef(Obekt):
-    def __init__(self, y, x, preor=3):
-        super().__init__(y, x, preor)
+    def get_pos(self) -> tuple:
+        return tuple(self.cord)
 
 
+class Landscape(Obekt):
+    def __init__(self, cord: tuple, importance=1):
+        super().__init__(cord, importance)
+
+
+class Grass(Landscape):
+    def __init__(self, cord: tuple, importance=1):
+        super().__init__(cord, importance)
+
+    @staticmethod
+    def get_type() -> int:
+        return 1
+
+
+class Stone(Landscape):
+    def __init__(self, cord: tuple, importance=1):
+        super().__init__(cord, importance)
+
+    @staticmethod
+    def get_type() -> int:
+        return 2
+
+
+'''
 class poctr(Obekt):
     def __init__(self, y, x, preor=2):
         super().__init__(y, x, preor)
+'''
 
 
-class entiti(Obekt):
-    def __init__(self, y, x, hp, preor=1):
-        super().__init__(y, x, preor)
+class Entity(Obekt):
+    def __init__(self, cord, hp, preor=3):
+        super().__init__(cord, preor)
         self.hp = hp
 
     def get_hp(self):
         return self.hp
 
 
-class predmet():
+class Item:
     def __init__(self):
         pass

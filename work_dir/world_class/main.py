@@ -23,7 +23,6 @@ else:
 
 pygame.display.set_caption('World')
 
-
 fps = 60
 clock = pygame.time.Clock()
 
@@ -38,6 +37,10 @@ def render_scale(val: int):
 
 # --== [НАЧАЛО РАБОТЫ С КЛАССОМ МИРА] ==--
 
+# -------------
+# |   Блоки   |
+# -------------
+
 class Block:
     def __init__(self, cord: tuple, t: int):
         self.cord = tuple(cord)
@@ -49,6 +52,10 @@ class Block:
     def get_type(self) -> int:
         return self.type
 
+
+# -------------------
+# |   Конец Блоки   |
+# -------------------
 
 class World:  # Класс мира
     def __init__(self):
@@ -103,7 +110,6 @@ class Chunk:  # Класс чанка мира
 
     def get_s(self):
         return self.ground
-
 
 
 aa = False
