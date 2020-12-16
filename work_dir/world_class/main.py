@@ -142,11 +142,17 @@ class World:  # Класс мира
                     chunk_surf = list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0].get_s()
                 except IndexError:
                     raise ValueError(f'Chunk ({chunk_cord}) not found!')
+                if x == -1 and y == -1:
+                    chunk_surf.fill((55, 55, 55))
 
-                tmp_world_surf.blit(chunk_surf, ((chunk_cord[0] + 2) * wid, (chunk_cord[1] + 2) * wid))
-                pygame.draw.rect(tmp_world_surf, (255, 255, 255),
+                chunk_surf.fill((abs(255 * x), abs(y*255), 255))
+
+                print(x, y, (chunk_cord[0] * wid + wid, chunk_cord[1] * wid + wid))
+
+                tmp_world_surf.blit(chunk_surf, (chunk_cord[1] * wid + wid, chunk_cord[0] * wid + wid))
+                '''pygame.draw.rect(tmp_world_surf, (255, 255, 255),
                                  ((chunk_cord[0] + 1) * wid, (chunk_cord[1] + 1) * wid, chunk_cord[0] * wid + wid,
-                                   chunk_cord[1] * wid + wid), 10)
+                                   chunk_cord[1] * wid + wid), 10)'''
 
         surf.blit(tmp_world_surf, map_c)
 
