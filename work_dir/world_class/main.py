@@ -110,8 +110,8 @@ class World:  # Класс мира
         self.center_chunk_cord = center_chunk_cord
 
     def init(self):
-        for y in range(-1, 1):
-            for x in range(-1, 1):
+        for y in range(-1, 2):
+            for x in range(-1, 2):
                 self.chunks.add(Chunk(sum([x, y]), (x, y)))
 
         for i in self.chunks:
@@ -135,19 +135,13 @@ class World:  # Класс мира
     def render(self, surf):
         wid = 1020 * MAP_COF
         tmp_world_surf = pygame.Surface((map_scale(1020) * 3, map_scale(1020) * 3))
-        for y in range(-1, 1):
-            for x in range(-1, 1):
+        for y in range(-1, 2):
+            for x in range(-1, 2):
                 chunk_cord = tuple([x + self.center_chunk_cord[0], y + self.center_chunk_cord[1]])
                 try:
                     chunk_surf = list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0].get_s()
                 except IndexError:
                     raise ValueError(f'Chunk ({chunk_cord}) not found!')
-                if x == -1 and y == -1:
-                    chunk_surf.fill((55, 55, 55))
-
-                chunk_surf.fill((abs(255 * x), abs(y*255), 255))
-
-                print(x, y, (chunk_cord[0] * wid + wid, chunk_cord[1] * wid + wid))
 
                 tmp_world_surf.blit(chunk_surf, (chunk_cord[1] * wid + wid, chunk_cord[0] * wid + wid))
                 '''pygame.draw.rect(tmp_world_surf, (255, 255, 255),
