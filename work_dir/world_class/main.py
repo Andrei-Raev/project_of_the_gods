@@ -2,15 +2,14 @@ import random
 import time
 from copy import copy
 from screeninfo import get_monitors
-from numba import cuda
-from threading import currentThread
+
 
 import pygame
 from math import sin, cos
 
 pygame.init()
 
-fullscreen = False
+fullscreen = True
 MAP_COF = 0.25
 
 if fullscreen:
@@ -18,7 +17,7 @@ if fullscreen:
     COF = width / 640
     screen = pygame.display.set_mode(size, pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.FULLSCREEN)
 else:
-    COF = 2.1
+    COF = 1
     size = width, height = int(640 * COF), int(360 * COF)
     screen = pygame.display.set_mode(size)
 
