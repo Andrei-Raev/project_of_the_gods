@@ -150,9 +150,11 @@ class World:  # Класс мира
 
         surf.blit(tmp_world_surf, map_c)
 
+    def move_visible_area(self):
+        pass
 
-def load_world(self, file):
-    pass
+    def load_world(self, file):
+        pass
 
 
 class Chunk:  # Класс чанка мира
