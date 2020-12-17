@@ -1,4 +1,4 @@
-from pe
+from perlin_lib import PerlinNoiseFactory
 import PIL.Image
 
 size = 200
@@ -8,7 +8,7 @@ frameres = 5
 space_range = size // res
 frame_range = frames // frameres
 
-pnf = PerlinNoiseFactory(3, octaves=4, tile=(space_range, space_range, frame_range))
+pnf = PerlinNoiseFactory(3, octaves=4, tile=(10, 10, 10))
 
 for t in range(frames):
     img = PIL.Image.new('L', (size, size))

@@ -3,14 +3,54 @@ import time
 from copy import copy
 from screeninfo import get_monitors
 
-
 import pygame
 from math import sin, cos
 
 pygame.init()
 
+
+# ============================================
+
+def init_screen_and_clock():
+    global screen, display, clock
+    pygame.init()
+    WINDOW_SIZE = (1150, 640)
+    pygame.display.set_caption('Game')
+    screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
+    clock = pygame.time.Clock()
+
+
+def create_fonts(font_sizes_list):
+    "Creates different fonts with one list"
+    fonts = []
+    for size in font_sizes_list:
+        fonts.append(
+            pygame.font.SysFont("Arial", size))
+    return fonts
+
+
+def render(fnt, what, color, where):
+    "Renders the fonts as passed from display_fps"
+    text_to_show = fnt.render(what, 0, pygame.Color(color))
+    screen.blit(text_to_show, where)
+
+
+def display_fps():
+    "Data that will be rendered and blitted in _display"
+    render(
+        fonts[0],
+        what=str(int(clock.get_fps())),
+        color="white",
+        where=(0, 0))
+
+
+init_screen_and_clock()
+fonts = create_fonts([32, 16, 14, 8])
+# ============================================
+
+
 fullscreen = True
-MAP_COF = 0.25
+MAP_COF = 1
 
 if fullscreen:
     size = width, height = get_monitors()[0].width, get_monitors()[0].height
@@ -132,8 +172,8 @@ class World:  # Класс мира
         print(dd)
 
     def render(self, surf):
-        wid = 1020 * MAP_COF
-        tmp_world_surf = pygame.Surface((map_scale(1020) * 3, map_scale(1020) * 3))
+        wid = 510 * MAP_COF
+        tmp_world_surf = pygame.Surface((map_scale(510) * 3, map_scale(510) * 3))
         for y in range(-1, 2):
             for x in range(-1, 2):
                 chunk_cord = tuple([x + self.center_chunk_cord[0], y + self.center_chunk_cord[1]])
@@ -162,7 +202,7 @@ class Chunk:  # Класс чанка мира
         self.cord = cord
 
         self.board = {'landscape': set(), 'buildings': {}, 'mechanisms': {}, 'entities': {}}
-        self.ground = pygame.Surface((map_scale(1020), map_scale(1020)))
+        self.ground = pygame.Surface((map_scale(510), map_scale(510)))
 
         self.blocks = [pygame.image.load('none.jpg').convert(), pygame.image.load('grass.png').convert(),
                        pygame.image.load('stone.png').convert(),
@@ -176,14 +216,14 @@ class Chunk:  # Класс чанка мира
         generator.seed(self.seed)
         del self.board
         self.board = {'landscape': set(), 'buildings': {}, 'mechanisms': {}, 'entities': {}}
-        for y in range(32):
-            for x in range(32):
+        for y in range(16):
+            for x in range(16):
                 self.board['landscape'].add([Grass((x, y)), Stone((x, y)), Sand((x, y))][generator.randint(0, 2)])
         del generator
 
     def render_chunk(self) -> None:
         del self.ground
-        self.ground = pygame.Surface((map_scale(1020), map_scale(1020)))
+        self.ground = pygame.Surface((map_scale(510), map_scale(510)))
         self.ground.fill((55, 5, 4))
         for i in self.board['landscape']:
             cord = i.get_cord()
@@ -243,7 +283,7 @@ if __name__ == '__main__':
             map_c[1] -= 5
 
         tmp.render(screen)
-
+        display_fps()
         clock.tick(fps)
         pygame.display.flip()
     pygame.quit()

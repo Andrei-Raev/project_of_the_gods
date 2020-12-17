@@ -1,5 +1,3 @@
-"""Perlin noise implementation."""
-# Licensed under ISC
 from itertools import product
 import math
 import random
