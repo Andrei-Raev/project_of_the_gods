@@ -55,9 +55,11 @@ class Entity(Obekt):
         self.hp = hp
 
     def get_hp(self):
-        return self.hp
+        return self.hpв
 
 
 class Item:
     def __init__(self):
         pass
+
+#FFFFFF
