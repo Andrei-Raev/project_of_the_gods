@@ -51,6 +51,7 @@ fonts = create_fonts([32, 16, 14, 8])
 
 fullscreen = True
 MAP_COF = 1
+WORLD_SIZE = {'small': 100, 'medium': 250, 'large': 500}
 
 if fullscreen:
     size = width, height = get_monitors()[0].width, get_monitors()[0].height
