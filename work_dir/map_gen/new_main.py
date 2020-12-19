@@ -2,10 +2,11 @@ import numpy as np
 import random
 from math import tan, sqrt
 # import pygame
+import pygame
 from numba import njit
 
 SIZE = 25
-SCALE = 20
+SCALE = 21
 
 random.seed(1)
 
@@ -18,41 +19,63 @@ for i in enumerate(world):
         world[i[0]][j[0]] = list([v[0] / sqrt(v[0] ** 2 + v[1] ** 2), v[1] / sqrt(v[0] ** 2 + v[1] ** 2)])
 del v
 
-world_noise = [[None] * (SCALE*SIZE)]
+world_noise = []
+world_noise.append(list())
 
-print(len(world_noise))
 for i in range(SIZE - 1):
     for j in range(SIZE - 1):
         vect = list([world[i][j], world[i][j + 1], world[i + 1][j], world[i + 1][j + 1]])
         for i_t in range(SCALE):
             for j_t in range(SCALE):
-                print((vect[0][0] * i_t + vect[0][1] * j_t), end='\t')
-            print()
-        print('\n\n')
+                coss = list()
+                tmp_vect = (i_t, -(j_t))
+                if not all(tmp_vect):
+                    continue
+                coss.append((vect[0][0] * vect[0][1] + tmp_vect[0] * tmp_vect[1]) / (
+                        sqrt(vect[0][0] ** 2 + tmp_vect[0] ** 2) * sqrt(vect[0][1] ** 2 + tmp_vect[1] ** 2)))
 
-print(*world_noise, sep='\n')
-del world, world_noise
+                tmp_vect = (i_t - SCALE, -(j_t))
+                if not all(tmp_vect):
+                    continue
+                coss.append((vect[0][0] * vect[0][1] + tmp_vect[0] * tmp_vect[1]) / (
+                        sqrt(vect[0][0] ** 2 + tmp_vect[0] ** 2) * sqrt(vect[0][1] ** 2 + tmp_vect[1] ** 2)))
 
-'''
+                tmp_vect = (i_t, SCALE - j_t)
+                if not all(tmp_vect):
+                    continue
+                coss.append((vect[0][0] * vect[0][1] + tmp_vect[0] * tmp_vect[1]) / (
+                        sqrt(vect[0][0] ** 2 + tmp_vect[0] ** 2) * sqrt(vect[0][1] ** 2 + tmp_vect[1] ** 2)))
+
+                tmp_vect = (i_t - SCALE, SCALE - j_t)
+                if not all(tmp_vect):
+                    continue
+                coss.append((vect[0][0] * vect[0][1] + tmp_vect[0] * tmp_vect[1]) / (
+                        sqrt(vect[0][0] ** 2 + tmp_vect[0] ** 2) * sqrt(vect[0][1] ** 2 + tmp_vect[1] ** 2)))
+
+                world_noise[-1].append(coss[:3])
+
+                if len(world_noise[-1]) == 500:
+                    world_noise.append(list())
+            #print()
+        #print('\n\n')
+
+#print(*world_noise, sep='\n')
+del world
+print('GENERATED!')
+
 if __name__ == '__main__':
-    # инициализация Pygame:
     pygame.init()
-    # размеры окна:
-    size = width, height = 800, 600
-    # screen — холст, на котором нужно рисовать:
+    size = width, height = 500, 500
     screen = pygame.display.set_mode(size)
-    # формирование кадра:
-    # команды рисования на холсте
     # ...
     screen.fill((0, 0, 0))
-    for num, el in enumerate(world):
-        pygame.draw.rect(screen, ([abs(min(round(el * 150), 255))] * 3), (num, 0, num, width))
+
+    for num, el in enumerate(world_noise):
+        for num_2, el_2 in enumerate(el):
+            pygame.draw.rect(screen, ((el_2[0] + 1) * 100,(el_2[1] + 1) * 100,(el_2[2] + 1) * 100), (num, num_2, num, num_2))
     # ...
-    # смена (отрисовка) кадра:
+    print('DONE!')
     pygame.display.flip()
-    # ожидание закрытия окна:
     while pygame.event.wait().type != pygame.QUIT:
         pass
-    # завершение работы:
     pygame.quit()
-'''
