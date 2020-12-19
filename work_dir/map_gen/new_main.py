@@ -1,74 +1,39 @@
 import numpy as np
 import random
+from math import tan, sqrt
+# import pygame
 from numba import njit
+
+SIZE = 25
+SCALE = 20
 
 random.seed(1)
 
-world = np.array([0.0] * 801)
-piks = [random.randint(0, 800) for _ in range(100)]
-inv_piks = [random.randint(0, 800) for _ in range(100)]
+world = (
+    [[[round(random.uniform(-1, 1), 10), round(random.uniform(-1, 1), 10)] for _ in range(SIZE)] for _ in range(SIZE)])
 
-for i in piks:
-    world[i] = 1.0
+for i in enumerate(world):
+    for j in enumerate(i[1]):
+        v = tuple(j[1])
+        world[i[0]][j[0]] = list([v[0] / sqrt(v[0] ** 2 + v[1] ** 2), v[1] / sqrt(v[0] ** 2 + v[1] ** 2)])
+del v
 
-for i in inv_piks:
-    world[i] = -1.0
+world_noise = [[None] * (SCALE*SIZE)]
 
+print(len(world_noise))
+for i in range(SIZE - 1):
+    for j in range(SIZE - 1):
+        vect = list([world[i][j], world[i][j + 1], world[i + 1][j], world[i + 1][j + 1]])
+        for i_t in range(SCALE):
+            for j_t in range(SCALE):
+                print((vect[0][0] * i_t + vect[0][1] * j_t), end='\t')
+            print()
+        print('\n\n')
 
-def gradient(m_len, ind):
-    return float(ind / m_len) * 100
+print(*world_noise, sep='\n')
+del world, world_noise
 
-
-def nearest_value(items, value):
-    '''Поиск ближайшего значения до value в списке items'''
-    found = items[0]  # найденное значение (первоначально первое)
-    for item in items:
-        if abs(item - value) < abs(found - value):
-            found = item
-    return found
-
-
-def find_blizh(p, in_p, ind):
-    a = nearest_value(p, ind)
-    b = nearest_value(in_p, ind)
-    return abs(a - b)
-
-
-def last(els, num):
-    # print(els, num)
-    if num >= els[0]:
-        return els[0]
-    for i in range(0, len(els) - 1):
-        if i <= num:
-            # print(i, num)
-            return i
-
-
-def linar_noise():
-    pik, = np.where(world == 1)
-    inv_pik, = np.where(world == -1)
-
-    for num, el in enumerate(world):
-        world[num] = gradient(num, el)
-        print('-> ', gradient(num, find_blizh(pik, inv_pik, num)))
-
-    return
-
-
-# world = np.random.normal(0, 1, 800)
 '''
-pik, = np.where(world == 1)
-inv_pik, = np.where(world == -1)
-intt = find_blizh(pik, inv_pik, 10)
-'''
-# linar_noise()
-
-'''print(pik, inv_pik, intt, sep='\n')
-
-print(*world)'''
-
-import pygame
-
 if __name__ == '__main__':
     # инициализация Pygame:
     pygame.init()
@@ -90,3 +55,4 @@ if __name__ == '__main__':
         pass
     # завершение работы:
     pygame.quit()
+'''
