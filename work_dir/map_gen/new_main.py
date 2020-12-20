@@ -56,10 +56,10 @@ for i in range(SIZE - 1):
 
                 if len(world_noise[-1]) == 500:
                     world_noise.append(list())
-            #print()
-        #print('\n\n')
+            # print()
+        # print('\n\n')
 
-#print(*world_noise, sep='\n')
+# print(*world_noise, sep='\n')
 del world
 print('GENERATED!')
 
@@ -72,7 +72,8 @@ if __name__ == '__main__':
 
     for num, el in enumerate(world_noise):
         for num_2, el_2 in enumerate(el):
-            pygame.draw.rect(screen, ((el_2[0] + 1) * 100,(el_2[1] + 1) * 100,(el_2[2] + 1) * 100), (num, num_2, num, num_2))
+            pygame.draw.rect(screen, ((el_2[0] + 1) * 100, (el_2[1] + 1) * 100, (el_2[2] + 1) * 100),
+                             (num, num_2, num, num_2))
     # ...
     print('DONE!')
     pygame.display.flip()
