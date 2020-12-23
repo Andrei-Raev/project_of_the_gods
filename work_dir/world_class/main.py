@@ -191,13 +191,13 @@ def color_asian(cof, cordss):
             cof = (cof - 0.5) * 0.2 + 0.9
         else:
             cof = (cof + 0.5) * 0.2 - 0.9
-
+    cof += .25
     if cof <= 0:
         return Water(cordss)
     else:
-        if 0 <= cof < 0.05:
+        if 0 <= cof < 0.1:
             return Sand(cordss)  # Пляж
-        elif 0.05 <= cof < 0.35:
+        elif 0.1 <= cof < 0.35:
             return Grass(cordss)  # Луга
         elif 0.35 <= cof < 0.5:
             return Grass(cordss)  # Равнины
