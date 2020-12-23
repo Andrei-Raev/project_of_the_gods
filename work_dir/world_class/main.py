@@ -1,8 +1,9 @@
 import random
 import time
-from copy import copy
+import sys
+import importlib.util
+from copy import copy, deepcopy
 from screeninfo import get_monitors
-
 import pygame
 from math import sin, cos
 
@@ -21,6 +22,18 @@ def lerp(t, a, b):
     return a + t * (b - a)
 
 
+
+
+RAND = importlib.util.find_spec('random')
+noise_random = importlib.util.module_from_spec(RAND)
+RAND.loader.exec_module(noise_random)
+sys.modules['noise_random'] = noise_random
+
+random = importlib.util.module_from_spec(RAND)
+RAND.loader.exec_module(random)
+sys.modules['random'] = random
+del RAND
+
 class PerlinNoiseFactory(object):
     def __init__(self, dimension, octaves=1, tile=(), unbias=False, seed=1):
         self.dimension = dimension
@@ -28,8 +41,7 @@ class PerlinNoiseFactory(object):
         self.tile = tile + (0,) * dimension
         self.unbias = unbias
         self.scale_factor = 2 * dimension ** -0.5
-        self.random = random
-        self.random.seed(seed)
+        self.random = noise_random
 
         self.gradient = {}
 
@@ -130,10 +142,10 @@ fonts = create_fonts([32, 16, 14, 8])
 
 
 fullscreen = True
-MAP_COF = 1
+MAP_COF = 0.65
 WORLD_SIZE = {'small': 100, 'medium': 250, 'large': 500}
-world_noise = PerlinNoiseFactory(2, octaves=2, tile=(15, 15, 15), unbias=True)
-world_noise_size = 62
+world_noise = PerlinNoiseFactory(2, octaves=4, unbias=False)
+world_noise_size = 50
 
 if fullscreen:
     size = width, height = get_monitors()[0].width, get_monitors()[0].height
@@ -332,8 +344,8 @@ class Chunk:  # Класс чанка мира
         self.board = {'landscape': set(), 'buildings': set(), 'mechanisms': {}, 'entities': {}}
         for y in range(16):
             for x in range(16):
-                tmp_noise = world_noise((x + self.cord[0] * 16) / world_noise_size,
-                                        (y + self.cord[1] * 16) / world_noise_size)
+                tmp_noise = world_noise((x + (self.cord[1]) * 16) / world_noise_size,
+                                        (y + (self.cord[0]) * 16) / world_noise_size)
                 self.board['landscape'].add(color_asian(tmp_noise, (x, y)))
         del generator
 
@@ -346,6 +358,9 @@ class Chunk:  # Класс чанка мира
             block_rect = self.blocks[i.get_type()].get_rect(topleft=(tuple([j * 32 * MAP_COF for j in cord])))
             self.ground.blit(self.blocks[i.get_type()], block_rect)
             del cord, i, block_rect,
+        # f = pygame.font.Font(None, 250)
+        # t = f.render(f'{self.cord}', True, (255, 255, 255))
+        # self.ground.blit(t, (25, 25))
 
     def get_s(self):
         return self.ground
