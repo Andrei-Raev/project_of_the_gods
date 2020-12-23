@@ -4,8 +4,8 @@ import pygame
 from perlin_lib import PerlinNoiseFactory
 from numba import njit
 
-size = 400
-res = 40
+size = 200
+res =70
 frames = 1
 
 pnf = PerlinNoiseFactory(3, octaves=4, tile=(15, 15, 15), unbias=True)
