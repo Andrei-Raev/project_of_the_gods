@@ -132,8 +132,8 @@ fonts = create_fonts([32, 16, 14, 8])
 fullscreen = True
 MAP_COF = 1
 WORLD_SIZE = {'small': 100, 'medium': 250, 'large': 500}
-world_noise = PerlinNoiseFactory(2, octaves=1, tile=(15, 15, 15), unbias=True)
-world_noise_size = 6
+world_noise = PerlinNoiseFactory(2, octaves=2, tile=(15, 15, 15), unbias=True)
+world_noise_size = 62
 
 if fullscreen:
     size = width, height = get_monitors()[0].width, get_monitors()[0].height
@@ -193,7 +193,6 @@ def color_asian(cof, cordss):
             return Stone(cordss)  # Горы
         else:
             return Stone(cordss)  # Снег в горах
-    return 0, 0, 0  # На всякий случай
 
 
 class Obekt:
@@ -271,6 +270,7 @@ class World:  # Класс мира
                 self.chunks.add(Chunk(sum([x, y]), (x, y)))
 
         for i in self.chunks:
+            print(i.get_cord())
             i.generate_chunk()
             i.render_chunk()
 
@@ -300,9 +300,6 @@ class World:  # Класс мира
                     raise ValueError(f'Chunk ({chunk_cord}) not found!')
 
                 tmp_world_surf.blit(chunk_surf, (chunk_cord[1] * wid + wid, chunk_cord[0] * wid + wid))
-                '''pygame.draw.rect(tmp_world_surf, (255, 255, 255),
-                                 ((chunk_cord[0] + 1) * wid, (chunk_cord[1] + 1) * wid, chunk_cord[0] * wid + wid,
-                                   chunk_cord[1] * wid + wid), 10)'''
 
         surf.blit(tmp_world_surf, map_c)
 
@@ -335,8 +332,8 @@ class Chunk:  # Класс чанка мира
         self.board = {'landscape': set(), 'buildings': set(), 'mechanisms': {}, 'entities': {}}
         for y in range(16):
             for x in range(16):
-                tmp_noise = world_noise(x + self.cord[0] * 16 / world_noise_size,
-                                        y + self.cord[1] * 16 / world_noise_size)
+                tmp_noise = world_noise((x + self.cord[0] * 16) / world_noise_size,
+                                        (y + self.cord[1] * 16) / world_noise_size)
                 self.board['landscape'].add(color_asian(tmp_noise, (x, y)))
         del generator
 
@@ -365,7 +362,7 @@ class Chunk:  # Класс чанка мира
 
 aa = False
 map_c = [0, 0]
-tmp = World(1, (0, 0))
+tmp = World(0, (0, 0))
 tmp.init()
 start_time_m = time.time()
 for _ in range(0):
