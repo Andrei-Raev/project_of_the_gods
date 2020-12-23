@@ -87,7 +87,7 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption('None')
 
-    COF = 1
+    COF = 4
     xx, yy = (300, 300)
     running = True
     while running:
@@ -107,7 +107,7 @@ if __name__ == '__main__':
         #tt = f.render('fefef', False, (0,255, 0))
         #ss = tmp.get_size()
         #tmp.blit(tt, ([i // 2 for i in ss]))
-        tmp = blur(tmp, 25)
+        tmp = antialiasing(tmp, COF)
 
         screen.blit(tmp, (50, 50))
         display_fps()
