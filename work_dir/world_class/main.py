@@ -8,6 +8,9 @@ from itertools import product
 
 # Импорт сторонних библиотек
 import pygame
+
+pygame.init()
+
 from screeninfo import get_monitors
 
 # Создание 2 рандомов (для генерации шума и для прочих целей)
@@ -264,14 +267,15 @@ class World:  # Класс мира
     def init(self):
         for y in range(-1, 2):
             for x in range(-1, 2):
-                self.chunks.add(Chunk(sum([x, y]), (x + self.center_chunk_cord[0], y + self.center_chunk_cord[1])))
+                self.chunks.add(
+                    Chunk(seed_from_cord(x, y), (x + self.center_chunk_cord[0], y + self.center_chunk_cord[1])))
 
         for i in self.chunks:
             i.generate_chunk(self.noise)
             i.render_chunk()
 
-    def add_chunk(self, cord, seed):
-        self.chunks.add(Chunk(seed, cord))
+    def add_chunk(self, cord):
+        self.chunks.add(Chunk(seed_from_cord(*cord), cord))
 
     def del_chunk(self, cord):
         for i in self.chunks:
@@ -279,20 +283,12 @@ class World:  # Класс мира
                 self.chunks.remove(i)
                 break
 
-    def re_render(self):
-        chunk = list()
-        dd = list(filter(lambda x: x.get_cord == self.center_chunk_cord, self.center_chunk_cord))[0]
-        print(dd)
-
     def render(self, surf):
         wid = 510 * MAP_COF
-        tmp_world_surf = pygame.Surface((map_scale(510) * 5, map_scale(510) * 5))
-        for y in range(-1, 4):
-            for x in range(-1, 4):
-                try:
-                    chunk_cord = tuple([x + self.center_chunk_cord[0], y + self.center_chunk_cord[1]])
-                except Exception as ex:
-                    print(ex, ex.__class__.__name__)
+        tmp_world_surf = pygame.Surface((map_scale(510) * 3, map_scale(510) * 3))
+        for y in range(-1, 2):
+            for x in range(-1, 2):
+                chunk_cord = tuple([x + self.center_chunk_cord[0], y + self.center_chunk_cord[1]])
                 try:
                     chunk_surf = list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0].get_s()
                 except IndexError:
@@ -302,8 +298,20 @@ class World:  # Класс мира
 
         surf.blit(tmp_world_surf, map_c)
 
-    def move_visible_area(self):
-        pass
+    def re_render(self):
+        chunk = list()
+        dd = list(filter(lambda x: x.get_cord == self.center_chunk_cord, self.center_chunk_cord))[0]
+        print(dd)
+
+    def move_visible_area(self, direction: int):  # 1 - вверх, 2 - вниз, 3 - влево, 4 - вправо
+        if direction == 1:
+            pass
+        elif direction == 2:
+            pass
+        elif direction == 3:
+            pass
+        elif direction == 4:
+            pass
 
     def load_world(self, file):
         pass
