@@ -8,6 +8,7 @@ from itertools import product
 
 # Импорт сторонних библиотек
 import pygame
+from PIL import Image
 
 pygame.init()
 
@@ -75,6 +76,15 @@ def seed_from_cord(x: int, y: int) -> int:
         while tmp.bit_length() > 16:
             tmp = round(tmp / 1000)
         return tmp
+
+
+def save_s(surface):
+    strFormat = 'RGBA'
+
+    raw_str = pygame.image.tostring(surface, strFormat, False)
+    image = Image.frombytes(strFormat, surface.get_size(), raw_str)
+    image.save(f'test/{round(random.random(), 20)}.png')
+    del strFormat, raw_str, image
 
 
 # ---------- PERLIN NOISE ----------
@@ -286,23 +296,24 @@ class World:  # Класс мира
     def render(self, surf):
         wid = 510 * MAP_COF
         tmp_world_surf = pygame.Surface((map_scale(510) * 3, map_scale(510) * 3))
-        for y in range(-1, 2):
-            for x in range(-1, 2):
-                chunk_cord = tuple([x + self.center_chunk_cord[0], y + self.center_chunk_cord[1]])
+        for y in range(-1 + self.center_chunk_cord[1], 2 + self.center_chunk_cord[1]):
+            for x in range(-1 + self.center_chunk_cord[0], 2 + self.center_chunk_cord[0]):
+                chunk_cord = tuple([x, y])
                 try:
                     chunk_surf = list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0].get_s()
                 except IndexError:
                     # raise ValueError(f'Chunk ({chunk_cord}) not found!')
                     self.chunks.add(Chunk(seed_from_cord(*chunk_cord), chunk_cord))
-                    chunk_surf = list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0]
-                    chunk_surf.generate_chunk(self.noise)
-                    chunk_surf.render_chunk()
-                    chunk_surf = chunk_surf.get_s()
+                    tmp_chunk = list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0]
+                    tmp_chunk.generate_chunk(self.noise)
+                    tmp_chunk.render_chunk()
+                    chunk_surf = tmp_chunk.get_s()
+                    print('000')
+                    # save_s(chunk_surf)
 
-
-                tmp_world_surf.blit(chunk_surf, (chunk_cord[1] * wid + wid, chunk_cord[0] * wid + wid))
-
-        surf.blit(tmp_world_surf, map_c)
+                tmp_world_surf.blit(chunk_surf, ((chunk_cord[1] - self.center_chunk_cord[1]) * wid + wid,
+                                                 (chunk_cord[0] - self.center_chunk_cord[0]) * wid + wid))
+        surf.blit(tmp_world_surf, [i - map_scale(510) for i in map_c])
 
     def re_render(self):
         chunk = list()
@@ -311,14 +322,13 @@ class World:  # Класс мира
 
     def move_visible_area(self, direction: int):  # 1 - вверх, 2 - вниз, 3 - влево, 4 - вправо
         if direction == 1:
-            self.center_chunk_cord = (self.center_chunk_cord[0], self.center_chunk_cord[1] - 1)
+            self.center_chunk_cord = (self.center_chunk_cord[0], self.center_chunk_cord[1] + 1)
         elif direction == 2:
             self.center_chunk_cord = (self.center_chunk_cord[0], self.center_chunk_cord[1] - 1)
         elif direction == 3:
-            self.center_chunk_cord = (self.center_chunk_cord[0], self.center_chunk_cord[1] - 1)
+            self.center_chunk_cord = (self.center_chunk_cord[0] + 1, self.center_chunk_cord[1])
         elif direction == 4:
-            self.center_chunk_cord = (self.center_chunk_cord[0], self.center_chunk_cord[1] - 1)
-        self.init()
+            self.center_chunk_cord = (self.center_chunk_cord[0] - 1, self.center_chunk_cord[1])
 
     def load_world(self, file):
         pass
@@ -340,8 +350,6 @@ class Chunk:  # Класс чанка мира
             self.blocks[num] = pygame.transform.scale(el, (map_scale(32), map_scale(32)))
 
     def generate_chunk(self, world_noise) -> None:
-        generator = random
-        generator.seed(self.seed)
         del self.board
         self.board = {'landscape': set(), 'buildings': set(), 'mechanisms': {}, 'entities': {}}
         for y in range(16):
@@ -349,7 +357,6 @@ class Chunk:  # Класс чанка мира
                 tmp_noise = world_noise((x + (self.cord[1]) * 16) / world_noise_size,
                                         (y + (self.cord[0]) * 16) / world_noise_size)
                 self.board['landscape'].add(color_asian(tmp_noise, (x, y)))
-        del generator
 
     def render_chunk(self) -> None:
         del self.ground
@@ -359,7 +366,12 @@ class Chunk:  # Класс чанка мира
             cord = i.get_cord()
             block_rect = self.blocks[i.get_type()].get_rect(topleft=(tuple([j * 32 * MAP_COF for j in cord])))
             self.ground.blit(self.blocks[i.get_type()], block_rect)
-            del cord, i, block_rect,
+            del cord, i, block_rect
+
+        # f = pygame.font.Font(None, 100)
+        # r = f.render(f'{self.cord}', True,(255,255,255))
+        # self.ground.blit(r, (50,50))
+
         # f = pygame.font.Font(None, 250)
         # t = f.render(f'{self.cord}', True, (255, 255, 255))
         # self.ground.blit(t, (25, 25))
@@ -369,6 +381,9 @@ class Chunk:  # Класс чанка мира
 
     def get_cord(self):
         return tuple(self.cord)
+
+    def __str__(self):
+        return f'Chunk {self.cord}'
 
     def load(self, data):
         pass
@@ -381,7 +396,7 @@ class Chunk:  # Класс чанка мира
 fonts = create_fonts([32, 16, 14, 8])
 
 fullscreen = False
-MAP_COF = 0.5
+MAP_COF = 1
 WORLD_SIZE = {'small': 100, 'medium': 250, 'large': 500}
 world_noise_size = 50
 
@@ -392,6 +407,7 @@ if fullscreen:
 else:
     COF = 2
     size = width, height = int(640 * COF), int(360 * COF)
+    size = width, height = map_scale(510), map_scale(510)
     screen = pygame.display.set_mode(size)
 
 pygame.display.set_caption('World')
@@ -432,7 +448,8 @@ if __name__ == '__main__':
                     aa = True
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    tmp.move_visible_area(3)
+                    pass
+                    # tmp.move_visible_area(3)
 
         keys = pygame.key.get_pressed()
 
@@ -444,6 +461,19 @@ if __name__ == '__main__':
             map_c[1] += 5
         if keys[pygame.K_UP]:
             map_c[1] -= 5
+
+        if map_c[0] < -map_scale(510):
+            tmp.move_visible_area(1)
+            map_c[0] = 0
+        elif map_c[0] > map_scale(510):
+            tmp.move_visible_area(2)
+            map_c[0] = 0
+        if map_c[1] < -map_scale(510):
+            tmp.move_visible_area(3)
+            map_c[1] = 0
+        elif map_c[1] > map_scale(510):
+            tmp.move_visible_area(4)
+            map_c[1] = 0
 
         tmp.render(screen)
         display_fps()
