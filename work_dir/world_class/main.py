@@ -305,13 +305,13 @@ class World:  # Класс мира
 
     def move_visible_area(self, direction: int):  # 1 - вверх, 2 - вниз, 3 - влево, 4 - вправо
         if direction == 1:
-            pass
+            self.center_chunk_cord = (self.center_chunk_cord[0], self.center_chunk_cord[1] - 1)
         elif direction == 2:
-            pass
+            self.center_chunk_cord = (self.center_chunk_cord[0], self.center_chunk_cord[1] - 1)
         elif direction == 3:
-            pass
+            self.center_chunk_cord = (self.center_chunk_cord[0], self.center_chunk_cord[1] - 1)
         elif direction == 4:
-            pass
+            self.center_chunk_cord = (self.center_chunk_cord[0], self.center_chunk_cord[1] - 1)
 
     def load_world(self, file):
         pass
