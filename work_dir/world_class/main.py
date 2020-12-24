@@ -292,7 +292,13 @@ class World:  # Класс мира
                 try:
                     chunk_surf = list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0].get_s()
                 except IndexError:
-                    raise ValueError(f'Chunk ({chunk_cord}) not found!')
+                    # raise ValueError(f'Chunk ({chunk_cord}) not found!')
+                    self.chunks.add(Chunk(seed_from_cord(*chunk_cord), chunk_cord))
+                    chunk_surf = list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0]
+                    chunk_surf.generate_chunk(self.noise)
+                    chunk_surf.render_chunk()
+                    chunk_surf = chunk_surf.get_s()
+
 
                 tmp_world_surf.blit(chunk_surf, (chunk_cord[1] * wid + wid, chunk_cord[0] * wid + wid))
 
@@ -312,6 +318,7 @@ class World:  # Класс мира
             self.center_chunk_cord = (self.center_chunk_cord[0], self.center_chunk_cord[1] - 1)
         elif direction == 4:
             self.center_chunk_cord = (self.center_chunk_cord[0], self.center_chunk_cord[1] - 1)
+        self.init()
 
     def load_world(self, file):
         pass
@@ -374,7 +381,7 @@ class Chunk:  # Класс чанка мира
 fonts = create_fonts([32, 16, 14, 8])
 
 fullscreen = False
-MAP_COF = 1
+MAP_COF = 0.5
 WORLD_SIZE = {'small': 100, 'medium': 250, 'large': 500}
 world_noise_size = 50
 
@@ -383,7 +390,7 @@ if fullscreen:
     COF = width / 640
     screen = pygame.display.set_mode(size, pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.FULLSCREEN)
 else:
-    COF = 1
+    COF = 2
     size = width, height = int(640 * COF), int(360 * COF)
     screen = pygame.display.set_mode(size)
 
@@ -425,7 +432,7 @@ if __name__ == '__main__':
                     aa = True
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    pass
+                    tmp.move_visible_area(3)
 
         keys = pygame.key.get_pressed()
 
