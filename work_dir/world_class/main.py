@@ -22,8 +22,6 @@ def lerp(t, a, b):
     return a + t * (b - a)
 
 
-
-
 RAND = importlib.util.find_spec('random')
 noise_random = importlib.util.module_from_spec(RAND)
 RAND.loader.exec_module(noise_random)
@@ -34,6 +32,7 @@ RAND.loader.exec_module(random)
 sys.modules['random'] = random
 del RAND
 
+
 class PerlinNoiseFactory(object):
     def __init__(self, dimension, octaves=1, tile=(), unbias=False, seed=1):
         self.dimension = dimension
@@ -42,6 +41,8 @@ class PerlinNoiseFactory(object):
         self.unbias = unbias
         self.scale_factor = 2 * dimension ** -0.5
         self.random = noise_random
+        self.random.seed(seed)
+        self.seed = seed
 
         self.gradient = {}
 
@@ -142,9 +143,8 @@ fonts = create_fonts([32, 16, 14, 8])
 
 
 fullscreen = True
-MAP_COF = 0.65
+MAP_COF = 1
 WORLD_SIZE = {'small': 100, 'medium': 250, 'large': 500}
-world_noise = PerlinNoiseFactory(2, octaves=4, unbias=False)
 world_noise_size = 50
 
 if fullscreen:
@@ -269,6 +269,8 @@ class Water(Landscape):
 # -------------------
 # |   Конец Блоки   |
 # -------------------
+world_noise = PerlinNoiseFactory(2, octaves=4, unbias=False, seed=22)
+
 
 class World:  # Класс мира
     def __init__(self, world_seed, center_chunk_cord):
@@ -277,8 +279,8 @@ class World:  # Класс мира
         self.center_chunk_cord = center_chunk_cord
 
     def init(self):
-        for y in range(-1, 2):
-            for x in range(-1, 2):
+        for y in range(-1, 4):
+            for x in range(-1, 7):
                 self.chunks.add(Chunk(sum([x, y]), (x, y)))
 
         for i in self.chunks:
@@ -302,10 +304,13 @@ class World:  # Класс мира
 
     def render(self, surf):
         wid = 510 * MAP_COF
-        tmp_world_surf = pygame.Surface((map_scale(510) * 3, map_scale(510) * 3))
-        for y in range(-1, 2):
-            for x in range(-1, 2):
-                chunk_cord = tuple([x + self.center_chunk_cord[0], y + self.center_chunk_cord[1]])
+        tmp_world_surf = pygame.Surface((map_scale(510) * 5, map_scale(510) * 5))
+        for y in range(-1, 4):
+            for x in range(-1, 4):
+                try:
+                    chunk_cord = tuple([x + self.center_chunk_cord[0], y + self.center_chunk_cord[1]])
+                except Exception as ex:
+                    print(ex, ex.__class__.__name__)
                 try:
                     chunk_surf = list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0].get_s()
                 except IndexError:
@@ -375,20 +380,28 @@ class Chunk:  # Класс чанка мира
         pass
 
 
+# open("a.txt", "w").close()
+
+
 aa = False
 map_c = [0, 0]
-tmp = World(0, (0, 0))
-tmp.init()
+
 start_time_m = time.time()
 for _ in range(0):
     start_time = time.time()
     print("--- %s seconds ---" % (time.time() - start_time))
 print()
+tmp = World(0, (0, 0))
+tmp.init()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
 if __name__ == '__main__':
     running = True
-
     while running:
+
+        # world_noise = PerlinNoiseFactory(2, octaves=4, unbias=False, seed=random.randint(1, 55))
+        # tmp = World(0, (0, 0))
+        # tmp.init()
+        # raise Exception("hui")
         screen.fill((100, 0, 0))
         ev = pygame.event.get()
         for event in ev:
