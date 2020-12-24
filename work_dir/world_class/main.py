@@ -1,27 +1,16 @@
-import random
-import time
+# ---------- IMPORTS ----------
+# Импорт системных библиотек
 import sys
-import importlib.util
-from copy import copy, deepcopy
-from screeninfo import get_monitors
-import pygame
-from math import sin, cos
-
-pygame.init()
-
-from itertools import product
 import math
-import random
+import time
+import importlib.util
+from itertools import product
 
+# Импорт сторонних библиотек
+import pygame
+from screeninfo import get_monitors
 
-def smoothstep(t):
-    return t * t * (3. - 2. * t)
-
-
-def lerp(t, a, b):
-    return a + t * (b - a)
-
-
+# Создание 2 рандомов (для генерации шума и для прочих целей)
 RAND = importlib.util.find_spec('random')
 noise_random = importlib.util.module_from_spec(RAND)
 RAND.loader.exec_module(noise_random)
@@ -33,8 +22,70 @@ sys.modules['random'] = random
 del RAND
 
 
+# ---------- FUNCTIONS ----------
+# Генерация градиента
+def gradient(col: int, col2: int, cof: float) -> int:
+    return round(col * cof + col2 * (1 - cof))
+
+
+# Масштабирование элементов интерфейса
+def render_scale(val: int) -> int:
+    return round(val * COF)
+
+
+# Масштабирование карты
+def map_scale(val: int) -> int:
+    return round(val * MAP_COF)
+
+
+# Конвертирует коэфицент шума перлина в блок
+def color_asian(cof: float, cordss: tuple):
+    if -0.5 <= cof <= 0.5:
+        cof = cof * 1.8
+    else:
+        if cof > 0:
+            cof = (cof - 0.5) * 0.2 + 0.9
+        else:
+            cof = (cof + 0.5) * 0.2 - 0.9
+    cof += .25
+    if cof <= 0:
+        return Water(cordss)
+    else:
+        if 0 <= cof < 0.1:
+            return Sand(cordss)  # Пляж
+        elif 0.1 <= cof < 0.35:
+            return Grass(cordss)  # Луга
+        elif 0.35 <= cof < 0.5:
+            return Grass(cordss)  # Равнины
+        elif 0.5 <= cof < 0.85:
+            return Stone(cordss)  # Горы
+        else:
+            return Stone(cordss)  # Снег в горах
+
+
+# Генерирует "случайный" сид, исходя из координат
+def seed_from_cord(x: int, y: int) -> int:
+    tmp = x << abs(y)
+    if tmp.bit_length() < 16:
+        return tmp
+    else:
+        while tmp.bit_length() > 16:
+            tmp = round(tmp / 1000)
+        return tmp
+
+
+# ---------- PERLIN NOISE ----------
+# Магия!!!
+def smoothstep(t):
+    return t * t * (3. - 2. * t)
+
+
+def lerp(t, a, b):
+    return a + t * (b - a)
+
+
 class PerlinNoiseFactory(object):
-    def __init__(self, dimension, octaves=1, tile=(), unbias=False, seed=1):
+    def __init__(self, dimension, octaves=1, seed=1, tile=(), unbias=False):
         self.dimension = dimension
         self.octaves = octaves
         self.tile = tile + (0,) * dimension
@@ -80,7 +131,6 @@ class PerlinNoiseFactory(object):
             while dots:
                 next_dots.append(lerp(s, dots.pop(0), dots.pop(0)))
             dots = next_dots
-
         return dots[0] * self.scale_factor
 
     def __call__(self, *point):
@@ -105,17 +155,8 @@ class PerlinNoiseFactory(object):
         return ret
 
 
-# ============================================
-
-def init_screen_and_clock():
-    global screen, display, clock
-    pygame.init()
-    WINDOW_SIZE = (1150, 640)
-    pygame.display.set_caption('Game')
-    screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
-    clock = pygame.time.Clock()
-
-
+# ---------- FPS CLOCK ----------
+# Создание шрифта для счетчика fps
 def create_fonts(font_sizes_list):
     fonts = []
     for size in font_sizes_list:
@@ -124,11 +165,13 @@ def create_fonts(font_sizes_list):
     return fonts
 
 
+# Рендер четчика fps
 def render(fnt, what, color, where):
     text_to_show = fnt.render(what, 0, pygame.Color(color))
     screen.blit(text_to_show, where)
 
 
+# Отображение четчика fps
 def display_fps():
     render(
         fonts[0],
@@ -137,74 +180,13 @@ def display_fps():
         where=(0, 0))
 
 
-init_screen_and_clock()
-fonts = create_fonts([32, 16, 14, 8])
-# ============================================
-
-
-fullscreen = True
-MAP_COF = 1
-WORLD_SIZE = {'small': 100, 'medium': 250, 'large': 500}
-world_noise_size = 50
-
-if fullscreen:
-    size = width, height = get_monitors()[0].width, get_monitors()[0].height
-    COF = width / 640
-    screen = pygame.display.set_mode(size, pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.FULLSCREEN)
-else:
-    COF = 1
-    size = width, height = int(640 * COF), int(360 * COF)
-    screen = pygame.display.set_mode(size)
-
-pygame.display.set_caption('World')
-
-fps = 60
-clock = pygame.time.Clock()
-
-
-def gradient(col, col2, cof):
-    return round(col * cof + col2 * (1 - cof))
-
-
-def render_scale(val: int):
-    return round(val * COF)
-
-
-def map_scale(val: int):
-    return round(val * MAP_COF)
-
-
-# --== [НАЧАЛО РАБОТЫ С КЛАССОМ МИРА] ==--
+# ---------- BLOCKS ----------
 
 # -------------
 # |   Блоки   |
 # -------------
 
 TYPE_BLOCKS = {1: 'grass', 2: 'stone', 3: 'sand'}
-
-
-def color_asian(cof, cordss):
-    if -0.5 <= cof <= 0.5:
-        cof = cof * 1.8
-    else:
-        if cof > 0:
-            cof = (cof - 0.5) * 0.2 + 0.9
-        else:
-            cof = (cof + 0.5) * 0.2 - 0.9
-    cof += .25
-    if cof <= 0:
-        return Water(cordss)
-    else:
-        if 0 <= cof < 0.1:
-            return Sand(cordss)  # Пляж
-        elif 0.1 <= cof < 0.35:
-            return Grass(cordss)  # Луга
-        elif 0.35 <= cof < 0.5:
-            return Grass(cordss)  # Равнины
-        elif 0.5 <= cof < 0.85:
-            return Stone(cordss)  # Горы
-        else:
-            return Stone(cordss)  # Снег в горах
 
 
 class Obekt:
@@ -269,23 +251,23 @@ class Water(Landscape):
 # -------------------
 # |   Конец Блоки   |
 # -------------------
-world_noise = PerlinNoiseFactory(2, octaves=4, unbias=False, seed=22)
 
 
+# ---------- WORLD ----------
 class World:  # Класс мира
-    def __init__(self, world_seed, center_chunk_cord):
+    def __init__(self, world_seed, center_chunk_cord, seed):
         self.world_seed = world_seed
         self.chunks = set()
         self.center_chunk_cord = center_chunk_cord
+        self.noise = PerlinNoiseFactory(2, octaves=4, unbias=False, seed=seed)
 
     def init(self):
-        for y in range(-1, 4):
-            for x in range(-1, 7):
-                self.chunks.add(Chunk(sum([x, y]), (x, y)))
+        for y in range(-1, 2):
+            for x in range(-1, 2):
+                self.chunks.add(Chunk(sum([x, y]), (x + self.center_chunk_cord[0], y + self.center_chunk_cord[1])))
 
         for i in self.chunks:
-            print(i.get_cord())
-            i.generate_chunk()
+            i.generate_chunk(self.noise)
             i.render_chunk()
 
     def add_chunk(self, cord, seed):
@@ -342,7 +324,7 @@ class Chunk:  # Класс чанка мира
         for num, el in enumerate(self.blocks):
             self.blocks[num] = pygame.transform.scale(el, (map_scale(32), map_scale(32)))
 
-    def generate_chunk(self) -> None:
+    def generate_chunk(self, world_noise) -> None:
         generator = random
         generator.seed(self.seed)
         del self.board
@@ -380,6 +362,28 @@ class Chunk:  # Класс чанка мира
         pass
 
 
+# ============================================
+fonts = create_fonts([32, 16, 14, 8])
+
+fullscreen = False
+MAP_COF = 1
+WORLD_SIZE = {'small': 100, 'medium': 250, 'large': 500}
+world_noise_size = 50
+
+if fullscreen:
+    size = width, height = get_monitors()[0].width, get_monitors()[0].height
+    COF = width / 640
+    screen = pygame.display.set_mode(size, pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.FULLSCREEN)
+else:
+    COF = 1
+    size = width, height = int(640 * COF), int(360 * COF)
+    screen = pygame.display.set_mode(size)
+
+pygame.display.set_caption('World')
+
+fps = 60
+clock = pygame.time.Clock()
+
 # open("a.txt", "w").close()
 
 
@@ -391,7 +395,7 @@ for _ in range(0):
     start_time = time.time()
     print("--- %s seconds ---" % (time.time() - start_time))
 print()
-tmp = World(0, (0, 0))
+tmp = World(0, (0, 0), 22)
 tmp.init()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
 if __name__ == '__main__':
