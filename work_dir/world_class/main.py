@@ -275,8 +275,8 @@ class World:  # Класс мира
         self.noise = PerlinNoiseFactory(2, octaves=4, unbias=False, seed=seed)
 
     def init(self):
-        for y in range(-1, 99):
-            for x in range(-1, 99):
+        for y in range(-1, 2):
+            for x in range(-1, 2):
                 self.chunks.add(
                     Chunk(seed_from_cord(x, y), (x + self.center_chunk_cord[0], y + self.center_chunk_cord[1])))
 
