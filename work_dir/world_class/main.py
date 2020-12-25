@@ -275,14 +275,14 @@ class World:  # Класс мира
         self.noise = PerlinNoiseFactory(2, octaves=4, unbias=False, seed=seed)
 
     def init(self):
-        for y in range(-1, 99):
-            for x in range(-1, 99):
+        for y in range(-1, 2):
+            for x in range(-1, 2):
                 self.chunks.add(
                     Chunk(seed_from_cord(x, y), (x + self.center_chunk_cord[0], y + self.center_chunk_cord[1])))
 
         for i in self.chunks:
             i.generate_chunk(self.noise)
-            #i.load()
+            # i.load()
             i.render_chunk()
 
     def add_chunk(self, cord):
@@ -469,7 +469,7 @@ for _ in range(0):
 print()
 tmp = World(0, (0, 0), 22)
 tmp.init()
-tmp.save_world()
+# tmp.save_world()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
 if __name__ == '__main__':
     running = True
