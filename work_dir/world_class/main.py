@@ -275,8 +275,8 @@ class World:  # Класс мира
         self.noise = PerlinNoiseFactory(2, octaves=4, unbias=False, seed=seed)
 
     def init(self):
-        for y in range(-1, 2):
-            for x in range(-1, 2):
+        for y in range(-1, 99):
+            for x in range(-1, 99):
                 self.chunks.add(
                     Chunk(seed_from_cord(x, y), (x + self.center_chunk_cord[0], y + self.center_chunk_cord[1])))
 
@@ -410,7 +410,7 @@ class Chunk:  # Класс чанка мира
 def cord_codec(cors: tuple) -> bytes:
     raw = b''
     for i in cors:
-        raw += i.to_bytes(16, byteorder="little")
+        raw += i.to_bytes(1, byteorder="little")
     return raw
 
 
@@ -418,10 +418,10 @@ def decode_chunk(file_path):
     board = {'landscape': set()}
     with open(f'save_data/{file_path}.ch', 'rb') as byte_file:
         chunk_raw = byte_file.read()
-        for i in range(len(chunk_raw) // 33):
-            tmp_type = chunk_raw[i * 33]
-            tmp_cord_x = int.from_bytes(chunk_raw[i * 33 + 1:i * 33 + 17], 'little')
-            tmp_cord_y = int.from_bytes(chunk_raw[i * 33 + 17:i * 33 + 33], 'little')
+        for i in range(len(chunk_raw) // 3):
+            tmp_type = chunk_raw[i * 3]
+            tmp_cord_x = int.from_bytes(chunk_raw[i * 3 + 1:i * 3 + 2], 'little')
+            tmp_cord_y = int.from_bytes(chunk_raw[i * 3 + 2:i * 3 + 3], 'little')
             print(tmp_type != 1)
             if tmp_type == 1:
                 board['landscape'].add(Grass((tmp_cord_x, tmp_cord_y)))
@@ -469,7 +469,7 @@ for _ in range(0):
 print()
 tmp = World(0, (0, 0), 22)
 tmp.init()
-# tmp.save_world()
+tmp.save_world()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
 if __name__ == '__main__':
     running = True
