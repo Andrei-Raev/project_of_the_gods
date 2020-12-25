@@ -275,13 +275,14 @@ class World:  # Класс мира
         self.noise = PerlinNoiseFactory(2, octaves=4, unbias=False, seed=seed)
 
     def init(self):
-        for y in range(-1, 2):
-            for x in range(-1, 2):
+        for y in range(-1, 99):
+            for x in range(-1, 99):
                 self.chunks.add(
                     Chunk(seed_from_cord(x, y), (x + self.center_chunk_cord[0], y + self.center_chunk_cord[1])))
 
         for i in self.chunks:
             i.generate_chunk(self.noise)
+            #i.load()
             i.render_chunk()
 
     def add_chunk(self, cord):
@@ -332,6 +333,10 @@ class World:  # Класс мира
 
     def load_world(self, file):
         pass
+
+    def save_world(self):
+        for i in self.chunks:
+            i.save(f'save_data/{i.get_cord()}.ch')
 
 
 class Chunk:  # Класс чанка мира
@@ -385,11 +390,48 @@ class Chunk:  # Класс чанка мира
     def __str__(self):
         return f'Chunk {self.cord}'
 
-    def load(self, data):
-        pass
+    def load(self):
+        self.board = decode_chunk(self.cord)
 
     def update(self, data):
         pass
+
+    def save(self, name_f):
+        raw = b''
+
+        for i in self.board['landscape']:
+            raw += i.get_type().to_bytes(1, byteorder="little")
+            raw += cord_codec(i.get_cord())
+
+        with open(name_f, 'wb') as byte_file:
+            byte_file.write(raw)
+
+
+def cord_codec(cors: tuple) -> bytes:
+    raw = b''
+    for i in cors:
+        raw += i.to_bytes(16, byteorder="little")
+    return raw
+
+
+def decode_chunk(file_path):
+    board = {'landscape': set()}
+    with open(f'save_data/{file_path}.ch', 'rb') as byte_file:
+        chunk_raw = byte_file.read()
+        for i in range(len(chunk_raw) // 33):
+            tmp_type = chunk_raw[i * 33]
+            tmp_cord_x = int.from_bytes(chunk_raw[i * 33 + 1:i * 33 + 17], 'little')
+            tmp_cord_y = int.from_bytes(chunk_raw[i * 33 + 17:i * 33 + 33], 'little')
+            print(tmp_type != 1)
+            if tmp_type == 1:
+                board['landscape'].add(Grass((tmp_cord_x, tmp_cord_y)))
+            elif tmp_type == 2:
+                board['landscape'].add(Stone((tmp_cord_x, tmp_cord_y)))
+            elif tmp_type == 3:
+                board['landscape'].add(Sand((tmp_cord_x, tmp_cord_y)))
+            elif tmp_type == 4:
+                board['landscape'].add(Water((tmp_cord_x, tmp_cord_y)))
+    return board
 
 
 # ============================================
@@ -407,7 +449,6 @@ if fullscreen:
 else:
     COF = 2
     size = width, height = int(640 * COF), int(360 * COF)
-    size = width, height = map_scale(510), map_scale(510)
     screen = pygame.display.set_mode(size)
 
 pygame.display.set_caption('World')
@@ -428,6 +469,7 @@ for _ in range(0):
 print()
 tmp = World(0, (0, 0), 22)
 tmp.init()
+tmp.save_world()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
 if __name__ == '__main__':
     running = True
