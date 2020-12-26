@@ -7,12 +7,12 @@ import importlib.util
 from itertools import product
 
 # Импорт сторонних библиотек
-import pygame
 from PIL import Image
+from screeninfo import get_monitors
+
+import pygame
 
 pygame.init()
-
-from screeninfo import get_monitors
 
 # Создание 2 рандомов (для генерации шума и для прочих целей)
 RAND = importlib.util.find_spec('random')
@@ -42,29 +42,32 @@ def map_scale(val: int) -> int:
     return round(val * MAP_COF)
 
 
-# Конвертирует коэфицент шума перлина в блок
-def color_asian(cof: float, cordss: tuple):
-    if -0.5 <= cof <= 0.5:
-        cof = cof * 1.8
-    else:
-        if cof > 0:
-            cof = (cof - 0.5) * 0.2 + 0.9
-        else:
-            cof = (cof + 0.5) * 0.2 - 0.9
-    cof += .25
-    if cof <= 0:
-        return Water(cordss)
+# Собирает блок по координатам и весу точки: [-1, 1]
+def block_constructor(cof: float, c_cords: tuple):
+    if -0.5 <= cof <= 0.5:  # ----------------| Нормализует веса
+        cof = cof * 1.8  # -------------------|
+    else:  # ---------------------------------|
+        if cof > 0:  # -----------------------|
+            cof = (cof - 0.5) * 0.2 + 0.9  # -|
+        else:  # -----------------------------|
+            cof = (cof + 0.5) * 0.2 - 0.9  # -|
+
+    cof += .25  # Осушает мир
+
+    # Алгоритм генерации блока
+    if cof <= 0:  # Уровень воды - 0. Если что-то ниже, это считается водой
+        return Water(c_cords, round(20000 * abs(cof)))
     else:
         if 0 <= cof < 0.1:
-            return Sand(cordss)  # Пляж
+            return Sand(c_cords)  # Пляж
         elif 0.1 <= cof < 0.35:
-            return Grass(cordss)  # Луга
+            return Grass(c_cords)  # Луга
         elif 0.35 <= cof < 0.5:
-            return Grass(cordss)  # Равнины
+            return Grass(c_cords)  # Равнины
         elif 0.5 <= cof < 0.85:
-            return Stone(cordss)  # Горы
+            return Stone(c_cords)  # Горы
         else:
-            return Stone(cordss)  # Снег в горах
+            return Stone(c_cords)  # Снег в горах
 
 
 # Генерирует "случайный" сид, исходя из координат
@@ -173,8 +176,7 @@ class PerlinNoiseFactory(object):
 def create_fonts(font_sizes_list):
     fonts = []
     for size in font_sizes_list:
-        fonts.append(
-            pygame.font.SysFont("Arial", size))
+        fonts.append(pygame.font.SysFont("Arial", size))
     return fonts
 
 
@@ -186,11 +188,7 @@ def render(fnt, what, color, where):
 
 # Отображение четчика fps
 def display_fps():
-    render(
-        fonts[0],
-        what=str(int(clock.get_fps())),
-        color="white",
-        where=(0, 0))
+    render(fonts[0], what=str(int(clock.get_fps())), color="white", where=(0, 0))
 
 
 # ---------- BLOCKS ----------
@@ -198,9 +196,6 @@ def display_fps():
 # -------------
 # |   Блоки   |
 # -------------
-
-TYPE_BLOCKS = {1: 'grass', 2: 'stone', 3: 'sand'}
-
 
 class Obekt:
     def __init__(self, cord: tuple, preor=0):
@@ -223,6 +218,9 @@ class Obekt:
 class Landscape(Obekt):
     def __init__(self, cord: tuple, importance=1):
         super().__init__(cord, importance)
+
+    def get_texture(self):
+        return
 
 
 class Grass(Landscape):
@@ -253,8 +251,9 @@ class Sand(Landscape):
 
 
 class Water(Landscape):
-    def __init__(self, cord: tuple, importance=1):
+    def __init__(self, cord: tuple, water_level: int, importance=1):
         super().__init__(cord, importance)
+        self.water_level = water_level
 
     @staticmethod
     def get_type() -> int:
@@ -309,12 +308,11 @@ class World:  # Класс мира
                     tmp_chunk.generate_chunk(self.noise)
                     tmp_chunk.render_chunk()
                     chunk_surf = tmp_chunk.get_s()
-                    print('000')
                     # save_s(chunk_surf)
 
                 tmp_world_surf.blit(chunk_surf, ((chunk_cord[1] - self.center_chunk_cord[1]) * wid + wid,
                                                  (chunk_cord[0] - self.center_chunk_cord[0]) * wid + wid))
-        surf.blit(tmp_world_surf, [i - map_scale(510) for i in map_c])
+        surf.blit(tmp_world_surf, [i - map_scale(510) for i in map_cords])
 
     def re_render(self):
         chunk = list()
@@ -359,9 +357,9 @@ class Chunk:  # Класс чанка мира
         self.board = {'landscape': set(), 'buildings': set(), 'mechanisms': {}, 'entities': {}}
         for y in range(16):
             for x in range(16):
-                tmp_noise = world_noise((x + (self.cord[1]) * 16) / world_noise_size,
-                                        (y + (self.cord[0]) * 16) / world_noise_size)
-                self.board['landscape'].add(color_asian(tmp_noise, (x, y)))
+                tmp_noise = world_noise((x + (self.cord[1]) * 16) / WORLD_NOISE_SIZE,
+                                        (y + (self.cord[0]) * 16) / WORLD_NOISE_SIZE)
+                self.board['landscape'].add(block_constructor(tmp_noise, (x, y)))
 
     def render_chunk(self) -> None:
         del self.ground
@@ -430,19 +428,29 @@ def decode_chunk(file_path):
             elif tmp_type == 3:
                 board['landscape'].add(Sand((tmp_cord_x, tmp_cord_y)))
             elif tmp_type == 4:
-                board['landscape'].add(Water((tmp_cord_x, tmp_cord_y)))
+                board['landscape'].add(Water((tmp_cord_x, tmp_cord_y), 20000))
     return board
 
 
-# ============================================
-fonts = create_fonts([32, 16, 14, 8])
+# Таймер для подсчета работы кода
+# start_time = time.time()
+# print("--- %s seconds ---" % (time.time() - start_time))
 
-fullscreen = False
+# ---------- CONSTANTS ----------
+TYPE_BLOCKS = {1: 'grass', 2: 'stone', 3: 'sand'}
+FULLSCREEN = False
 MAP_COF = 1
 WORLD_SIZE = {'small': 100, 'medium': 250, 'large': 500}
-world_noise_size = 50
+WORLD_NOISE_SIZE = 50
 
-if fullscreen:
+# ---------- VARIABLES ----------
+fonts = create_fonts([32, 16, 14, 8])
+map_cords = [0, 0]
+fps = 60
+clock = pygame.time.Clock()
+
+# ---------- INIT ----------
+if FULLSCREEN:
     size = width, height = get_monitors()[0].width, get_monitors()[0].height
     COF = width / 640
     screen = pygame.display.set_mode(size, pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.FULLSCREEN)
@@ -453,41 +461,28 @@ else:
 
 pygame.display.set_caption('World')
 
-fps = 60
-clock = pygame.time.Clock()
-
-# open("a.txt", "w").close()
-
-
-aa = False
-map_c = [0, 0]
 
 start_time_m = time.time()
-for _ in range(0):
-    start_time = time.time()
-    print("--- %s seconds ---" % (time.time() - start_time))
-print()
 tmp = World(0, (0, 0), 22)
 tmp.init()
 tmp.save_world()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
-if __name__ == '__main__':
-    running = True
-    while running:
 
+if __name__ == '__main__':
+    main_running = True
+    while main_running:
         # world_noise = PerlinNoiseFactory(2, octaves=4, unbias=False, seed=random.randint(1, 55))
         # tmp = World(0, (0, 0))
         # tmp.init()
         # raise Exception("hui")
-        screen.fill((100, 0, 0))
+
         ev = pygame.event.get()
         for event in ev:
             if event.type == pygame.QUIT:
-                running = False
+                main_running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     cords = event.pos
-                    aa = True
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     pass
@@ -496,29 +491,32 @@ if __name__ == '__main__':
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_RIGHT]:
-            map_c[0] += 5
+            map_cords[0] += 5
         if keys[pygame.K_LEFT]:
-            map_c[0] -= 5
+            map_cords[0] -= 5
         if keys[pygame.K_DOWN]:
-            map_c[1] += 5
+            map_cords[1] += 5
         if keys[pygame.K_UP]:
-            map_c[1] -= 5
+            map_cords[1] -= 5
 
-        if map_c[0] < -map_scale(510):
+        if map_cords[0] < -map_scale(510):
             tmp.move_visible_area(1)
-            map_c[0] = 0
-        elif map_c[0] > map_scale(510):
+            map_cords[0] = 0
+        elif map_cords[0] > map_scale(510):
             tmp.move_visible_area(2)
-            map_c[0] = 0
-        if map_c[1] < -map_scale(510):
+            map_cords[0] = 0
+        if map_cords[1] < -map_scale(510):
             tmp.move_visible_area(3)
-            map_c[1] = 0
-        elif map_c[1] > map_scale(510):
+            map_cords[1] = 0
+        elif map_cords[1] > map_scale(510):
             tmp.move_visible_area(4)
-            map_c[1] = 0
+            map_cords[1] = 0
 
+        # Рендер основного окна
+        screen.fill((47, 69, 56))
         tmp.render(screen)
         display_fps()
         clock.tick(fps)
         pygame.display.flip()
-    pygame.quit()
+
+    pygame.quit()  # Завершение работы
