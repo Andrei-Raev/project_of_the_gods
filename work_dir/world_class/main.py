@@ -90,6 +90,46 @@ def save_s(surface):
     del strFormat, raw_str, image
 
 
+def bright(surf: pygame.surface.Surface, brightness):
+    image = Image.frombytes('RGBA', surf.get_size(), pygame.image.tostring(surf, 'RGBA', False))
+    for x in range(image.size[0]):
+        for y in range(image.size[1]):
+            r, g, b, a = image.getpixel((x, y))
+
+            red = int(r * brightness)
+            red = min(255, max(0, red))
+
+            green = int(g * brightness)
+            green = min(255, max(0, green))
+
+            blue = int(b * brightness)
+            blue = min(255, max(0, blue))
+
+            image.putpixel((x, y), (red, green, blue, a))
+    del r, g, b, a, red, green, blue, brightness
+    return pygame.image.fromstring(image.tobytes("raw", 'RGBA'), image.size, 'RGBA')
+
+
+def dark(surf: pygame.surface.Surface, brightness):
+    image = Image.frombytes('RGBA', surf.get_size(), pygame.image.tostring(surf, 'RGBA', False))
+    for x in range(image.size[0]):
+        for y in range(image.size[1]):
+            r, g, b, a = image.getpixel((x, y))
+
+            red = int(r // brightness)
+            red = min(255, max(0, red))
+
+            green = int(g // brightness)
+            green = min(255, max(0, green))
+
+            blue = int(b // brightness)
+            blue = min(255, max(0, blue))
+
+            image.putpixel((x, y), (red, green, blue, a))
+    del r, g, b, a, red, green, blue, brightness
+    return pygame.image.fromstring(image.tobytes("raw", 'RGBA'), image.size, 'RGBA')
+
+
 # ---------- PERLIN NOISE ----------
 # Магия!!!
 def smoothstep(t):
@@ -219,8 +259,15 @@ class Landscape(Obekt):
     def __init__(self, cord: tuple, importance=1):
         super().__init__(cord, importance)
 
+    @staticmethod
+    def get_type() -> int:
+        return 0
+
     def get_texture(self):
-        return
+        return TEXTURES['block'][self.get_type()]
+
+    def get_super_texture(self):
+        return TEXTURES['block'][self.get_type()]
 
 
 class Grass(Landscape):
@@ -258,6 +305,10 @@ class Water(Landscape):
     @staticmethod
     def get_type() -> int:
         return 4
+
+    def get_super_texture(self):
+        cof = ((2 * (self.water_level + 16000) / 20000))
+        return dark(TEXTURES['block'][4], cof)
 
 
 # -------------------
@@ -345,13 +396,6 @@ class Chunk:  # Класс чанка мира
         self.board = {'landscape': set(), 'buildings': {}, 'mechanisms': {}, 'entities': {}}
         self.ground = pygame.Surface((map_scale(510), map_scale(510)))
 
-        self.blocks = [pygame.image.load('none.jpg').convert(), pygame.image.load('grass.png').convert(),
-                       pygame.image.load('stone.png').convert(),
-                       pygame.image.load('sand.png').convert(), pygame.image.load('water.jpg').convert()]
-
-        for num, el in enumerate(self.blocks):
-            self.blocks[num] = pygame.transform.scale(el, (map_scale(32), map_scale(32)))
-
     def generate_chunk(self, world_noise) -> None:
         del self.board
         self.board = {'landscape': set(), 'buildings': set(), 'mechanisms': {}, 'entities': {}}
@@ -367,8 +411,9 @@ class Chunk:  # Класс чанка мира
         self.ground.fill((55, 5, 4))
         for i in self.board['landscape']:
             cord = i.get_cord()
-            block_rect = self.blocks[i.get_type()].get_rect(topleft=(tuple([j * 32 * MAP_COF for j in cord])))
-            self.ground.blit(self.blocks[i.get_type()], block_rect)
+            tmp_texture = i.get_texture()
+            block_rect = tmp_texture.get_rect(topleft=(tuple([j * 32 * MAP_COF for j in cord])))
+            self.ground.blit(tmp_texture, block_rect)
             del cord, i, block_rect
 
         # f = pygame.font.Font(None, 100)
@@ -461,7 +506,17 @@ else:
 
 pygame.display.set_caption('World')
 
+# ---------- TEXTURES ----------
+tmp_block_textures = [pygame.image.load('none.jpg').convert(), pygame.image.load('grass.png').convert(),
+                      pygame.image.load('stone.png').convert(),
+                      pygame.image.load('sand.png').convert(), pygame.image.load('water.png').convert()]
+for num, el in enumerate(tmp_block_textures):
+    tmp_block_textures[num] = pygame.transform.scale(el, (map_scale(32), map_scale(32)))
 
+TEXTURES = {'block': tmp_block_textures,
+            'none': pygame.image.load('none.jpg').convert()}
+
+# ---------- WORK SPASE ----------
 start_time_m = time.time()
 tmp = World(0, (0, 0), 22)
 tmp.init()
