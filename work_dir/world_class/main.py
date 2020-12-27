@@ -338,19 +338,40 @@ class Water(Landscape):
 
 # ---------- ENTITIES ----------
 class Entity(pygame.sprite.Sprite):
-    def __init__(self, cords, texture, *groups):  #: pygame.AbstractGroup):
+    def __init__(self, texture: pygame.image, cords: tuple, speed: float, *groups):  #: pygame.AbstractGroup):
         super().__init__(*groups)
         self.cords = cords
         self.image = texture
         self.rect = self.image.get_rect()
+        self.speed = ((32 * MAP_COF) * speed)
 
     def move(self, delta_cords):
         self.cords = [self.cords[0] + delta_cords[0], self.cords[1] + delta_cords[1]]
         self.rect = self.image.get_rect(topleft=self.cords)
 
+    def go(self, direct: int in [1, 2, 3, 4]):
+        if direct == 1:
+            self.move((0, self.speed // fps))
+        elif direct == 2:
+            self.move((0, -(self.speed // fps)))
+        elif direct == 3:
+            self.move((self.speed // fps, 0))
+        elif direct == 4:
+            self.move((-(self.speed // fps), 0))
+
 
 class Player(Entity):
-    pass
+    def tick(self):
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_RIGHT]:
+            self.go(3)
+        if keys[pygame.K_LEFT]:
+            self.go(4)
+        if keys[pygame.K_DOWN]:
+            self.go(1)
+        if keys[pygame.K_UP]:
+            self.go(2)
 
 
 # ---------- WORLD ----------
@@ -565,7 +586,7 @@ TEXTURES = {'block': tmp_block_textures,
             'none': pygame.image.load('res/image/block/none.jpg').convert()}
 
 # ---------- WORK SPASE ----------
-pl = Player((50, 50), TEXTURES['entity'][0])
+pl = Player(TEXTURES['entity'][0], (255, 255), 5)
 
 start_time_m = time.time()
 tmp = World(0, (0, 0), 22)
@@ -593,10 +614,10 @@ if __name__ == '__main__':
                     pass
                     # tmp.move_visible_area(3)
             elif event.type == pygame.MOUSEMOTION:
-                print(event)
-                pl.move(event.rel)
+                pass
+                # pl.move(event.rel)
 
-        keys = pygame.key.get_pressed()
+        '''keys = pygame.key.get_pressed()
 
         if keys[pygame.K_RIGHT]:
             map_cords[0] += 5
@@ -605,7 +626,7 @@ if __name__ == '__main__':
         if keys[pygame.K_DOWN]:
             map_cords[1] += 5
         if keys[pygame.K_UP]:
-            map_cords[1] -= 5
+            map_cords[1] -= 5'''
 
         if map_cords[0] < -map_scale(510):
             tmp.move_visible_area(1)
@@ -619,6 +640,7 @@ if __name__ == '__main__':
         elif map_cords[1] > map_scale(510):
             tmp.move_visible_area(4)
             map_cords[1] = 0
+        pl.tick()
 
         # Рендер основного окна
         screen.fill((47, 69, 56))
