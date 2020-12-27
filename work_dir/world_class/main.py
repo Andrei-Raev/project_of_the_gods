@@ -7,7 +7,10 @@ import importlib.util
 from itertools import product
 
 # Импорт сторонних библиотек
+# from threading import Thread
+
 from PIL import Image
+from pygame.threads import Thread
 from screeninfo import get_monitors
 
 import pygame
@@ -128,6 +131,24 @@ def dark(surf: pygame.surface.Surface, brightness):
             image.putpixel((x, y), (red, green, blue, a))
     del r, g, b, a, red, green, blue, brightness
     return pygame.image.fromstring(image.tobytes("raw", 'RGBA'), image.size, 'RGBA')
+
+
+def simple_chunk_texture_generation(chunk):
+    tmp_ground = pygame.Surface((map_scale(510), map_scale(510)))
+    tmp_ground.fill((0, 0, 0, 0))
+    tmp_textures = []
+    for i in chunk.board['landscape']:
+        if type(i) == Water:
+            tmp_textures.append([pygame.image.tostring(i.get_texture(), "RGBA", False),
+                                 i.get_texture().get_rect(topleft=(tuple([j * 32 * MAP_COF for j in i.get_cord()]))),
+                                 (2 * (i.water_level + 16000) / 20000)])
+    if not len(tmp_textures):
+        return
+    for num, el in enumerate(tmp_textures):
+        tmp_img = Image.frombytes("RGBA", (32, 32), el[0])
+        tmp_img = dark(tmp_img, el[2])
+
+    chunk.ground = tmp_ground
 
 
 # ---------- PERLIN NOISE ----------
@@ -315,6 +336,22 @@ class Water(Landscape):
 # |   Конец Блоки   |
 # -------------------
 
+# ---------- ENTITIES ----------
+class Entity(pygame.sprite.Sprite):
+    def __init__(self, cords, texture, *groups):  #: pygame.AbstractGroup):
+        super().__init__(*groups)
+        self.cords = cords
+        self.image = texture
+        self.rect = self.image.get_rect()
+
+    def move(self, delta_cords):
+        self.cords = [self.cords[0] + delta_cords[0], self.cords[1] + delta_cords[1]]
+        self.rect = self.image.get_rect(topleft=self.cords)
+
+
+class Player(Entity):
+    pass
+
 
 # ---------- WORLD ----------
 class World:  # Класс мира
@@ -415,6 +452,7 @@ class Chunk:  # Класс чанка мира
             block_rect = tmp_texture.get_rect(topleft=(tuple([j * 32 * MAP_COF for j in cord])))
             self.ground.blit(tmp_texture, block_rect)
             del cord, i, block_rect
+        # simple_chunk_texture_generation(self)
 
         # f = pygame.font.Font(None, 100)
         # r = f.render(f'{self.cord}', True,(255,255,255))
@@ -507,16 +545,28 @@ else:
 pygame.display.set_caption('World')
 
 # ---------- TEXTURES ----------
-tmp_block_textures = [pygame.image.load('none.jpg').convert(), pygame.image.load('grass.png').convert(),
-                      pygame.image.load('stone.png').convert(),
-                      pygame.image.load('sand.png').convert(), pygame.image.load('water.png').convert()]
+# Загрузка текстур фундаментальных блоков
+tmp_block_textures = [pygame.image.load('res/image/block/none.jpg').convert(), pygame.image.load(
+    'res/image/block/grass.png').convert(),
+                      pygame.image.load('res/image/block/stone.png').convert(),
+                      pygame.image.load('res/image/block/sand.png').convert(), pygame.image.load(
+        'res/image/block/water.jpg').convert()]
 for num, el in enumerate(tmp_block_textures):
     tmp_block_textures[num] = pygame.transform.scale(el, (map_scale(32), map_scale(32)))
 
+# Загрузка текстур сущьностей
+tmp_entity_textures = [pygame.image.load('res/image/entities/player/main.png').convert_alpha()]
+for num, el in enumerate(tmp_entity_textures):
+    tmp_entity_textures[num] = pygame.transform.scale(el, (map_scale(32), map_scale(32)))
+
+# Общая сборка
 TEXTURES = {'block': tmp_block_textures,
-            'none': pygame.image.load('none.jpg').convert()}
+            'entity': tmp_entity_textures,
+            'none': pygame.image.load('res/image/block/none.jpg').convert()}
 
 # ---------- WORK SPASE ----------
+pl = Player((50, 50), TEXTURES['entity'][0])
+
 start_time_m = time.time()
 tmp = World(0, (0, 0), 22)
 tmp.init()
@@ -542,6 +592,9 @@ if __name__ == '__main__':
                 if event.key == pygame.K_SPACE:
                     pass
                     # tmp.move_visible_area(3)
+            elif event.type == pygame.MOUSEMOTION:
+                print(event)
+                pl.move(event.rel)
 
         keys = pygame.key.get_pressed()
 
@@ -570,6 +623,7 @@ if __name__ == '__main__':
         # Рендер основного окна
         screen.fill((47, 69, 56))
         tmp.render(screen)
+        screen.blit(pl.image, pl.rect)
         display_fps()
         clock.tick(fps)
         pygame.display.flip()
