@@ -151,6 +151,12 @@ def simple_chunk_texture_generation(chunk):
     chunk.ground = tmp_ground
 
 
+def get_relative_coordinates(x: int, y: int):
+    x = (x % 16, x // 16)
+    y = (y % 16, y // 16)
+    return (x[0], y[0]), (x[1], y[1])
+
+
 # ---------- PERLIN NOISE ----------
 # Магия!!!
 def smoothstep(t):
@@ -359,6 +365,13 @@ class Entity(pygame.sprite.Sprite):
         elif direct == 4:
             self.move((-(self.speed // fps), 0))
 
+    def get_cord(self):
+        pix_x, pix_y = self.cords
+        x = round(pix_x / BLOCK_SIZE) + tmp.center_chunk_cord[0]*16
+        y = round(pix_y / BLOCK_SIZE) + tmp.center_chunk_cord[1]*16
+
+        return get_relative_coordinates(x, y)
+
 
 class Player(Entity):
     def tick(self):
@@ -546,6 +559,7 @@ FULLSCREEN = False
 MAP_COF = 1
 WORLD_SIZE = {'small': 100, 'medium': 250, 'large': 500}
 WORLD_NOISE_SIZE = 50
+BLOCK_SIZE = MAP_COF * 32
 
 # ---------- VARIABLES ----------
 fonts = create_fonts([32, 16, 14, 8])
@@ -641,6 +655,7 @@ if __name__ == '__main__':
             tmp.move_visible_area(4)
             map_cords[1] = 0
         pl.tick()
+        print(pl.get_cord())
 
         # Рендер основного окна
         screen.fill((47, 69, 56))
