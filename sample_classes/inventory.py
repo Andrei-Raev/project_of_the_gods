@@ -4,10 +4,10 @@ import sys
 import math
 import time
 import importlib.util
-from itertools import product
 
 # Импорт сторонних библиотек
 # from threading import Thread
+from copy import copy
 
 from PIL import Image, ImageFilter
 from pygame.threads import Thread
@@ -146,37 +146,6 @@ def blur(surface, rad):
     return result
 
 
-# ---------- ENTITIES ----------
-class Entity(pygame.sprite.Sprite):
-    def __init__(self, texture: pygame.image, cords: tuple, speed: float, *groups):  #: pygame.AbstractGroup):
-        super().__init__(*groups)
-        self.cords = cords
-        self.image = texture
-        self.rect = self.image.get_rect()
-        self.speed = ((32 * MAP_COF) * speed)
-
-    def move(self, delta_cords):
-        self.cords = [self.cords[0] + delta_cords[0], self.cords[1] + delta_cords[1]]
-        self.rect = self.image.get_rect(topleft=self.cords)
-
-    def go(self, direct: int in [1, 2, 3, 4]):
-        if direct == 1:
-            self.move((0, self.speed // fps))
-        elif direct == 2:
-            self.move((0, -(self.speed // fps)))
-        elif direct == 3:
-            self.move((self.speed // fps, 0))
-        elif direct == 4:
-            self.move((-(self.speed // fps), 0))
-
-    def get_cord(self):
-        pix_x, pix_y = self.cords
-        x = round(pix_x / BLOCK_SIZE)
-        y = round(pix_y / BLOCK_SIZE)
-
-        return get_relative_coordinates(x, y)
-
-
 def antialiasing(surface, size_cof):
     size = surface.get_size()
     size = [i // size_cof for i in size]
@@ -200,14 +169,9 @@ class Item(pygame.sprite.Sprite):
         self.description = description
         self.cords = cords
         self.image = texture
+        self.is_grab = False
         self.image = pygame.transform.scale(self.image, (35, 35))
         self.rect = self.image.get_rect()
-
-    def move(self, delta_cords):
-        self.cords = [self.cords[0] + delta_cords[0], self.cords[1] + delta_cords[1]]
-        self.rect = self.image.get_rect(topleft=self.cords)
-
-
 
 
 class InventoryBoard:
@@ -217,7 +181,7 @@ class InventoryBoard:
 
         self.width = 20
         self.height = 15
-        self.board = [[None] * width for _ in range(height)]
+        self.board = set()
 
         self.cell_size = 40
         self.left = (height - self.cell_size * self.height) // 2
@@ -254,6 +218,19 @@ class InventoryBoard:
 
         self.inv_background = antialiasing(self.inv_background, tmp_cof)
 
+    def render_main(self):
+        self.screen = copy(self.inv_background)
+        margin = width * 0.02
+
+        for item in self.board:
+            # print(item.is_grab)
+            if not item.is_grab:
+                self.screen.blit(item.image,
+                                 (margin + item.cords[0] * self.cell_size, margin + item.cords[1] * self.cell_size))
+            else:
+                self.screen.blit(item.image, (pygame.mouse.get_pos()[0] - self.top + margin * 1.5,
+                                              pygame.mouse.get_pos()[1] - self.left + margin * 1.5))
+
     def render(self, a):
         """
         for i in range(self.width):
@@ -261,13 +238,8 @@ class InventoryBoard:
                 pygame.draw.rect(a, (255, 255, 255),
                                  (self.top + self.cell_size * i, self.left + self.cell_size * j, self.cell_size - 1,
                                   self.cell_size - 1), 5, 8)"""
-        a.blit(self.inv_background, (self.top - width * 0.02, self.left - width * 0.02))
-        for y in enumerate(self.board):
-            for x in enumerate(y[1]):
-                if x[1] and not self.is_moving:
-                    a.blit(x[1].image, (self.top + x[0]*self.cell_size, self.left + y[0]*self.cell_size))
-                elif self.is_moving and x[1]:
-                    a.blit(x[1].image, pygame.mouse.get_pos())
+        self.render_main()
+        a.blit(self.screen, (self.top - width * 0.02, self.left - width * 0.02))
 
     def click(self, cord: tuple):
         """print(self.height)
@@ -279,29 +251,46 @@ class InventoryBoard:
             x = (cord[0] - self.left) // self.cell_size
             y = (cord[1] - self.top) // self.cell_size"""
         if self.top <= cord[0] <= self.top + self.width * self.cell_size and self.left <= cord[
-            1] <= self.left + self.width * self.cell_size:
+            1] <= self.left + self.height * self.cell_size:
             x = (cord[0] - self.top) // self.cell_size
             y = (cord[1] - self.left) // self.cell_size
-            print(x, y)
 
             if self.is_moving:
                 self.is_moving = False
                 self.move_item(self.old_cords, (x, y))
-            elif self.board[y][x]:
-                self.is_moving = True
-                self.old_cords = (x, y)
 
+                tmp_item = list(filter(lambda it: it.cords == (x, y), self.board))[0]
+                self.board.remove(tmp_item)
+                tmp_item.is_grab = False
+                self.board.add(tmp_item)
+
+            elif list(filter(lambda it: it.cords == (x, y), self.board)) and not self.is_moving:
+                print(x, y)
+                self.old_cords = x, y
+                self.is_moving = True
+
+                tmp_item = list(filter(lambda it: it.cords == (x, y), self.board))[0]
+                self.board.remove(tmp_item)
+                tmp_item.is_grab = True
+                self.board.add(tmp_item)
         else:
             print(None)
 
-    def add_item(self, item, cords):
-        self.board[cords[1]][cords[0]] = item
+    def add_item(self, item: Item):
+        self.board.add(item)
 
     def move_item(self, start_cord, end_cord):
+        '''
         if self.board[start_cord[1]][start_cord[0]] is not None:
             if self.board[end_cord[1]][end_cord[0]] is None:
                 self.board[end_cord[1]][end_cord[0]] = self.board[start_cord[1]][start_cord[0]]
-                self.board[start_cord[1]][start_cord[0]] = None
+                self.board[start_cord[1]][start_cord[0]] = None'''
+        if list(filter(lambda x: x.cords == start_cord, self.board)):
+            if not list(filter(lambda x: x.cords == end_cord, self.board)):
+                tmp_item = list(filter(lambda x: x.cords == start_cord, self.board))[0]
+                self.board.remove(tmp_item)
+                tmp_item.cords = end_cord
+                self.board.add(tmp_item)
 
 
 def inventory():
@@ -311,7 +300,10 @@ def inventory():
     background = blur(screen, 15)
     screen.blit(background, (0, 0))
     board = InventoryBoard()
-    board.add_item(Item(pygame.image.load('test.png'), 'Тестовый предмет', 'Это просто магия', (0, 0)),(1, 1))
+
+    for i in range(1):
+        for j in range(1):
+            board.add_item(Item(pygame.image.load('test.png'), 'Тестовый предмет', 'Это просто магия', (i, j)))
 
     while is_open:
         for event in pygame.event.get():
