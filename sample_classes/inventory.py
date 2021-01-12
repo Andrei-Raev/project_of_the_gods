@@ -172,16 +172,48 @@ class Item(pygame.sprite.Sprite):
         self.is_grab = False
         self.image = pygame.transform.scale(self.image, (35, 35))
         self.rect = self.image.get_rect()
+        self.speed = 3
+        self.abs_cords = (0, 0)
+
+    def move_to_cords(self, *cordss):
+        distance = math.sqrt((cordss[0] - self.abs_cords[0]) ** 2 + (cordss[1] - self.abs_cords[1]) ** 2)
+
+        tmp_x = self.abs_cords[0] - cordss[0]
+        tmp_y = self.abs_cords[1] - cordss[1]
+        try:
+            angel = tmp_x / tmp_y
+        except ZeroDivisionError:
+            return cordss
+        angel = math.degrees(math.atan(angel))
+
+        if distance < 1:
+            self.speed = 0
+        elif 1 <= distance <= 30:
+            if self.speed > 1:
+                self.speed -= 0.5
+        else:
+            self.speed += 0.07
+
+        if self.abs_cords[1] - cordss[1] < 0:
+            x = self.abs_cords[0] + math.sin(angel * math.pi / 180) * self.speed
+            y = self.abs_cords[1] + math.cos(angel * math.pi / 180) * self.speed
+        else:
+            x = self.abs_cords[0] - math.sin(angel * math.pi / 180) * self.speed
+            y = self.abs_cords[1] - math.cos(angel * math.pi / 180) * self.speed
+
+        self.abs_cords = [x, y]
+
+        return self.abs_cords
 
 
 class InventoryBoard:
     # создание поля
-    def __init__(self):
+    def __init__(self, items):
         self.is_moving = False
 
         self.width = 20
         self.height = 15
-        self.board = set()
+        self.board = set(items)
 
         self.cell_size = 40
         self.left = (height - self.cell_size * self.height) // 2
@@ -192,6 +224,10 @@ class InventoryBoard:
         self.inv_background.set_colorkey((0, 0, 0))
         self.inv_background = self.inv_background.convert_alpha()
         self.render_background()
+
+        margin = width * 0.02
+        for item in self.board:
+            item.abs_cords = (margin + item.cords[0] * self.cell_size, margin + item.cords[1] * self.cell_size)
 
     def render_background(self):
         tmp_cof = 1
@@ -225,11 +261,11 @@ class InventoryBoard:
         for item in self.board:
             # print(item.is_grab)
             if not item.is_grab:
-                self.screen.blit(item.image,
-                                 (margin + item.cords[0] * self.cell_size, margin + item.cords[1] * self.cell_size))
+                self.screen.blit(item.image, item.move_to_cords(margin + item.cords[0] * self.cell_size,
+                                                                margin + item.cords[1] * self.cell_size))
             else:
-                self.screen.blit(item.image, (pygame.mouse.get_pos()[0] - self.top + margin * 1.5,
-                                              pygame.mouse.get_pos()[1] - self.left + margin * 1.5))
+                self.screen.blit(item.image, item.move_to_cords(pygame.mouse.get_pos()[0] - self.top + margin,
+                                                                pygame.mouse.get_pos()[1] - self.left + margin))
 
     def render(self, a):
         """
@@ -277,6 +313,8 @@ class InventoryBoard:
             print(None)
 
     def add_item(self, item: Item):
+        margin = width * 0.02
+        item.abs_cords = (margin + item.cords[0] * self.cell_size, margin + item.cords[1] * self.cell_size)
         self.board.add(item)
 
     def move_item(self, start_cord, end_cord):
@@ -296,10 +334,11 @@ class InventoryBoard:
 def inventory():
     global main_running
     global screen
+    speed = 10
     is_open = True
     background = blur(screen, 15)
     screen.blit(background, (0, 0))
-    board = InventoryBoard()
+    board = InventoryBoard([])
 
     for i in range(1):
         for j in range(1):
