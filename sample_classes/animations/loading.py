@@ -1,3 +1,6 @@
+from copy import copy
+from time import sleep
+
 import pygame
 from math import sin, cos, radians, atan, degrees
 
@@ -44,7 +47,10 @@ def draw_arrow(surf, color, start_cords, end_cords, width):
     except ZeroDivisionError:
         rotate = 0
 
-    rotate = degrees(atan(rotate))
+    if not tmp_x:
+        rotate = 180
+    else:
+        rotate = degrees(atan(rotate))
 
     for iters in range(3):
 
@@ -75,32 +81,125 @@ def draw_arrow(surf, color, start_cords, end_cords, width):
     pygame.draw.polygon(surf, color, points, 0)
 
 
-def draw_circle_lines(surf, rads, rotate=False):
+def draw_circle_lines(surf, rads, center, width, rotate=False):
     for iters in range(3):
         if rotate:
             tmp = radians(120 * iters)
             draw_arrow(surf, WHITE,
-                       ((sin(tmp) * rads[0] + 300) * 4, (cos(tmp) * rads[0] + 300) * 4),
-                       ((sin(tmp) * rads[1] + 300) * 4, (cos(tmp) * rads[1] + 300) * 4), 40)
+                       ((sin(tmp) * rads[1] + center[0]), (cos(tmp) * rads[1] + center[1])),
+                       ((sin(tmp) * rads[0] + center[0]), (cos(tmp) * rads[0] + center[1])), width)
         else:
             tmp = radians(120 * iters + 60)
             draw_arrow(surf, WHITE,
-                       ((sin(tmp) * rads[1] + 300) * 4, (cos(tmp) * rads[1] + 300) * 4),
-                       ((sin(tmp) * rads[0] + 300) * 4, (cos(tmp) * rads[0] + 300) * 4), 40)
+                       ((sin(tmp) * rads[0] + center[0]), (cos(tmp) * rads[0] + center[1])),
+                       ((sin(tmp) * rads[1] + center[0]), (cos(tmp) * rads[1] + center[1])), width)
 
 
-t = pygame.surface.Surface((2400, 2400))
+class LoadingAnim:
+    def __init__(self, scr: pygame.surface.Surface, val):
+        self.value = val
+        self.size = scr.get_size()
+        self.screen = pygame.surface.Surface(self.size)
+        self.scr = scr
+        self.fps = 60
+        self.background = copy(scr)
+        self.background_color = (0, 0, 0)
+        self.color = (255, 255, 255)
+        self.width = 10
 
-draw_circle_lines(t, [30, 98])
-draw_circle_lines(t, [100, 180], True)
-pygame.draw.circle(t, WHITE, (1200, 1200), 400, 40)
+        self.start()
+
+    def start(self):
+        self.screen.fill(self.background_color)
+        for tmp_val in range(30):
+            self.scr.blit(self.background, (0, 0))
+            self.screen.set_alpha(255 * (tmp_val / 30))
+            self.scr.blit(self.screen, (0, 0))
+
+            clock.tick(self.fps)
+            pygame.display.flip()
+
+        self.screen.set_alpha(255)
+        for tmp_val in range(20):
+            self.screen.fill(self.background_color)
+            self.scr.blit(self.screen, (0, 0))
+
+            pygame.draw.circle(self.scr, self.color, [t // 2 for t in self.size], (self.size[1] // 4) * (tmp_val / 20),
+                               self.width)
+
+            clock.tick(self.fps)
+            pygame.display.flip()
+
+        for tmp_val in range(20):
+            self.screen.fill(self.background_color)
+            self.scr.blit(self.screen, (0, 0))
+
+            pygame.draw.circle(self.scr, self.color, [t // 2 for t in self.size], (self.size[1] // 4), self.width)
+
+            draw_circle_lines(self.scr, [(self.size[1] // 4) - tmp_val - 5, (self.size[1] // 4) - 5],
+                              [t // 2 for t in self.size], self.width, True)
+            draw_circle_lines(self.scr, [(self.size[1] // 4 - 5), (self.size[1] // 4) + tmp_val + 5],
+                              [t // 2 for t in self.size], self.width)
+
+            clock.tick(self.fps)
+            pygame.display.flip()
+
+    def change_value(self, new_val):
+        if 0 <= new_val <= 100:
+            self.value = new_val
+            self.draw_screen()
+
+    def draw_screen(self):
+        self.screen.fill(self.background_color)
+        self.scr.blit(self.screen, (0, 0))
+
+        pygame.draw.circle(self.scr, self.color, [t // 2 for t in self.size], (self.size[1] // 4), self.width)
+
+        draw_circle_lines(self.scr, [((self.size[1] // 4) - 25) - (((self.size[1] // 4) - 25) * self.value / 100),
+                                     (self.size[1] // 4) - 5], [t // 2 for t in self.size], self.width, True)
+        draw_circle_lines(self.scr,
+                          [(self.size[1] // 4 - 5), (self.size[1] // 4) + 25 + self.value * self.size[1] / 1000],
+                          [t // 2 for t in self.size], self.width)
+
+        clock.tick(self.fps)
+        pygame.display.flip()
+
+    def end(self):
+        pass
+
 
 clock = pygame.time.Clock()
-clock.tick(60)
 
-screen.blit(antialiasing(t, 4), (0, 0))
+'''for i in range(80):
+    t = pygame.surface.Surface((1200, 1200))
+    screen.fill((0, 0, 0))
+    draw_circle_lines(t, [100 - i, 98])
+    draw_circle_lines(t, [100, 100 + i], True)
+    pygame.draw.circle(t, WHITE, (600, 600), 200, 20)
+    screen.blit(antialiasing(t, 2), (0, 0))
+    clock.tick(60)
+    pygame.display.flip()
+'''
 
+screen.fill((15, 99, 66))
 pygame.display.flip()
+sleep(1)
+ttt = LoadingAnim(screen, 0)
+
+for i in range(100):
+    ttt.change_value(i)
+
+
+for i in range(30):
+    t = pygame.surface.Surface((1200, 1200))
+    screen.fill((0, 0, 0))
+    draw_circle_lines(t, [20 - i * .9, 98 - i * 2.95],[t // 2 for t in size],20)
+    draw_circle_lines(t, [100 + i * 10, 180 + i * 8],[t // 2 for t in size],20, True)
+    pygame.draw.circle(t, WHITE, [t // 2 for t in size], 200 + i * 25, 20)
+    screen.blit(antialiasing(t, 4), (0, 0))
+    clock.tick(60)
+    pygame.display.flip()
+
 while pygame.event.wait().type != pygame.QUIT:
     pass
 
