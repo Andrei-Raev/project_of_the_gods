@@ -1,6 +1,8 @@
 import pygame
 from math import sin, cos, radians, atan, degrees
 
+from PIL import Image
+
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 BLACK = (0, 0, 0)
@@ -13,8 +15,24 @@ screen = pygame.display.set_mode(size)
 screen.fill(BLACK)
 
 
+def antialiasing(surface, size_cof):
+    size = surface.get_size()
+    size = [i // size_cof for i in size]
+    strFormat = 'RGBA'
+
+    raw_str = pygame.image.tostring(surface, strFormat, False)
+    image = Image.frombytes(strFormat, surface.get_size(), raw_str)
+
+    image = image.resize(size, resample=Image.ANTIALIAS)
+
+    raw_str = image.tobytes("raw", strFormat)
+    result = pygame.image.fromstring(raw_str, image.size, strFormat)
+    del size, strFormat, raw_str, image
+    return result
+
+
 def draw_arrow(surf, color, start_cords, end_cords, width):
-    rad_ar = width * 1.5
+    rad_ar = width * 2.3
 
     points = []
 
@@ -62,21 +80,25 @@ def draw_circle_lines(surf, rads, rotate=False):
         if rotate:
             tmp = radians(120 * iters)
             draw_arrow(surf, WHITE,
-                       (sin(tmp) * rads[0] + 300, cos(tmp) * rads[0] + 300),
-                       (sin(tmp) * rads[1] + 300, cos(tmp) * rads[1] + 300), 10)
+                       ((sin(tmp) * rads[0] + 300) * 4, (cos(tmp) * rads[0] + 300) * 4),
+                       ((sin(tmp) * rads[1] + 300) * 4, (cos(tmp) * rads[1] + 300) * 4), 40)
         else:
             tmp = radians(120 * iters + 60)
             draw_arrow(surf, WHITE,
-                       (sin(tmp) * rads[1] + 300, cos(tmp) * rads[1] + 300),
-                       (sin(tmp) * rads[0] + 300, cos(tmp) * rads[0] + 300), 10)
+                       ((sin(tmp) * rads[1] + 300) * 4, (cos(tmp) * rads[1] + 300) * 4),
+                       ((sin(tmp) * rads[0] + 300) * 4, (cos(tmp) * rads[0] + 300) * 4), 40)
 
 
-draw_circle_lines(screen, [30, 98])
-draw_circle_lines(screen, [100, 180], True)
-pygame.draw.circle(screen, WHITE, (300, 300), 100, 10)
+t = pygame.surface.Surface((2400, 2400))
+
+draw_circle_lines(t, [30, 98])
+draw_circle_lines(t, [100, 180], True)
+pygame.draw.circle(t, WHITE, (1200, 1200), 400, 40)
 
 clock = pygame.time.Clock()
 clock.tick(60)
+
+screen.blit(antialiasing(t, 4), (0, 0))
 
 pygame.display.flip()
 while pygame.event.wait().type != pygame.QUIT:
