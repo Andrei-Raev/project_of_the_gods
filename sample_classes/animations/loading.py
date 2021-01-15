@@ -169,7 +169,7 @@ class LoadingAnim:
         pygame.display.flip()
 
     def end(self, new_surf):
-        for tmp_val in range(30):
+        for tmp_val in range(20):
             self.screen.fill(self.background_color)
             self.scr.blit(self.screen, (0, 0))
 
@@ -177,7 +177,7 @@ class LoadingAnim:
                                self.width)
 
             draw_circle_lines(self.scr, [((self.size[1] // 4) - 25) - (((self.size[1] // 4) - 45) * self.value / 100),
-                                         (self.size[1] // 4) - 5 - ((self.size[1] // 4) - 32) * tmp_val / 30],
+                                         (self.size[1] // 4) - 5 - ((self.size[1] // 4) - 32) * tmp_val / 20],
                               [t // 2 for t in self.size], self.width, True)
             draw_circle_lines(self.scr,
                               [(self.size[1] // 4 - 5) + (self.size[1] // 4 - 5) * tmp_val / 15,
@@ -188,9 +188,9 @@ class LoadingAnim:
             clock.tick(self.fps)
             pygame.display.flip()
 
-        for tmp_val in range(30):
+        for tmp_val in range(20):
             self.scr.blit(new_surf, (0, 0))
-            self.screen.set_alpha(255 - 255 * (tmp_val / 30))
+            self.screen.set_alpha(255 - 255 * (tmp_val / 20))
             self.scr.blit(self.screen, (0, 0))
 
             clock.tick(self.fps)
