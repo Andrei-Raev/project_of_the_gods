@@ -259,7 +259,6 @@ class InventoryBoard:
         margin = width * 0.02
 
         for item in self.board:
-            # print(item.is_grab)
             if not item.is_grab:
                 self.screen.blit(item.image, item.move_to_cords(margin + item.cords[0] * self.cell_size,
                                                                 margin + item.cords[1] * self.cell_size))

@@ -235,6 +235,63 @@ else:
 
 pygame.display.set_caption('Pause break')
 
+
+class PauseScreen:
+    def __init__(self, size, background):
+        self.font = pygame.font.Font(r'D:\temp\project_of_the_gods\work_dir\main_menu\font.ttf', 50)
+        self.screen = pygame.surface.Surface(size)
+        self.background = background
+
+    def render(self, surf: pygame.surface.Surface):
+        self.screen = pygame.surface.Surface(size)
+        self.screen.set_colorkey((0, 0, 0))
+        self.screen = self.screen.convert_alpha()
+
+        for i in range(1000):
+            pygame.draw.line(self.screen,
+                             (0, 0, 0, abs(255 - abs((i - 500) // 2)) if abs(255 - abs((i - 500) // 2)) > 2 else 2),
+                             (i, 0), (i, 1000))
+
+        surf.blit(self.background, (0, 0))
+        surf.blit(self.screen, (0, 0))
+
+
+def pause():
+    global main_running
+    global screen
+    is_open = True
+    background = blur(screen, 15)
+    background.fill((255, 255, 255))
+    screen.blit(background, (0, 0))
+
+    pause_obj = PauseScreen(size, background)
+
+    while is_open:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                main_running = False
+                return
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    screen.blit(background, (0, 0))
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    pass
+                if event.key == pygame.K_ESCAPE:
+                    is_open = False
+            elif event.type == pygame.MOUSEMOTION:
+                pass
+                # pl.move(event.rel)
+
+        # screen.blit(background, (0, 0))
+
+        pause_obj.render(screen)
+
+        display_fps()
+        clock.tick(fps)
+        pygame.display.flip()
+
+
 if __name__ == '__main__':
     main_running = True
     im = pygame.transform.scale(pygame.image.load('im.png'), (int(1280 / 1), int(1231 / 1)))
