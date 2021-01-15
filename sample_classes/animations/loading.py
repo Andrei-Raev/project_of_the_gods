@@ -145,9 +145,13 @@ class LoadingAnim:
             pygame.display.flip()
 
     def change_value(self, new_val):
-        if 0 <= new_val <= 100:
-            self.value = new_val
-            self.draw_screen()
+        if 0 <= self.value + new_val <= 100 and new_val != self.value:
+            for tmp_val in range(new_val):
+                self.value = tmp_val
+                self.draw_screen()
+
+                clock.tick(self.fps)
+                pygame.display.flip()
 
     def draw_screen(self):
         self.screen.fill(self.background_color)
@@ -155,7 +159,7 @@ class LoadingAnim:
 
         pygame.draw.circle(self.scr, self.color, [t // 2 for t in self.size], (self.size[1] // 4), self.width)
 
-        draw_circle_lines(self.scr, [((self.size[1] // 4) - 25) - (((self.size[1] // 4) - 25) * self.value / 100),
+        draw_circle_lines(self.scr, [((self.size[1] // 4) - 25) - (((self.size[1] // 4) - 45) * self.value / 100),
                                      (self.size[1] // 4) - 5], [t // 2 for t in self.size], self.width, True)
         draw_circle_lines(self.scr,
                           [(self.size[1] // 4 - 5), (self.size[1] // 4) + 25 + self.value * self.size[1] / 1000],
@@ -164,8 +168,36 @@ class LoadingAnim:
         clock.tick(self.fps)
         pygame.display.flip()
 
-    def end(self):
-        pass
+    def end(self, new_surf):
+        for tmp_val in range(30):
+            self.screen.fill(self.background_color)
+            self.scr.blit(self.screen, (0, 0))
+
+            pygame.draw.circle(self.scr, self.color, [t // 2 for t in self.size], (self.size[1] // 4) + tmp_val * 20,
+                               self.width)
+
+            draw_circle_lines(self.scr, [((self.size[1] // 4) - 25) - (((self.size[1] // 4) - 45) * self.value / 100),
+                                         (self.size[1] // 4) - 5 - ((self.size[1] // 4) - 32) * tmp_val / 30],
+                              [t // 2 for t in self.size], self.width, True)
+            draw_circle_lines(self.scr,
+                              [(self.size[1] // 4 - 5) + (self.size[1] // 4 - 5) * tmp_val / 15,
+                               ((self.size[1] // 4) + 25 + self.value * self.size[1] / 1000) + (
+                                       (self.size[1] // 4) + 25 + self.value * self.size[1] / 1000) * tmp_val / 15],
+                              [t // 2 for t in self.size], self.width)
+
+            clock.tick(self.fps)
+            pygame.display.flip()
+
+        for tmp_val in range(30):
+            self.scr.blit(new_surf, (0, 0))
+            self.screen.set_alpha(255 - 255 * (tmp_val / 30))
+            self.scr.blit(self.screen, (0, 0))
+
+            clock.tick(self.fps)
+            pygame.display.flip()
+
+        self.scr.blit(new_surf, (0, 0))
+        pygame.display.flip()
 
 
 clock = pygame.time.Clock()
@@ -186,10 +218,11 @@ pygame.display.flip()
 sleep(1)
 ttt = LoadingAnim(screen, 0)
 
-for i in range(100):
-    ttt.change_value(i)
+ttt.change_value(100)
+# ttt.change_value(-50)
+ttt.end(pygame.transform.scale(pygame.image.load('im.png'), (700, 700)))
 
-
+'''
 for i in range(30):
     t = pygame.surface.Surface((1200, 1200))
     screen.fill((0, 0, 0))
@@ -199,7 +232,7 @@ for i in range(30):
     screen.blit(antialiasing(t, 4), (0, 0))
     clock.tick(60)
     pygame.display.flip()
-
+'''
 while pygame.event.wait().type != pygame.QUIT:
     pass
 
