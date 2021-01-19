@@ -1,9 +1,9 @@
 {
   "name": "",
   "owner": "Андрей",
-  "gender": "",
-  "class": 0,
-  "race": 0,
+  "gender": "M",
+  "class": "12",
+  "race": "1",
   "hp": 0,
   "kd": 0,
   "specifications": {
@@ -11,25 +11,22 @@
     "weight": 0,
     "age": 0,
     "appearance": {
-      "skin": "",
-      "hair": "",
-      "eyes": ""
+      "skin": "?",
+      "hair": "?",
+      "eyes": "?"
     },
-    "temper": "",
-    "background": "",
+    "temper": ["??? ???","?"],
+    "background": "?",
     "static": {
-      "strength": 0,
-      "constitution": 0,
-      "dexterity": 0,
-      "intelligence": 0,
-      "wisdom": 0,
-      "charisma": 0
+      "strength": 11,
+      "constitution": 12,
+      "dexterity": 11,
+      "intelligence": 14,
+      "wisdom": 12,
+      "charisma": 7
     }
   },
-  "abilities": {
-    "race": [],
-    "class": []
-  },
+  "abilities": [],
   "skill": [],
   "items": []
 }

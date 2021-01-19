@@ -30,6 +30,10 @@ def skell_recycle(string: str) -> str:
         return recycle(string)
 
 
+def main_skell_recycle(lis: list) -> str:
+    return recycle(lis[0]) + ':\t' + lis[1]
+
+
 class Player:
     def __init__(self, path):
         with open(path, 'r', encoding='utf-8') as file:
@@ -42,8 +46,11 @@ class Player:
         self.hp = int(self.data['hp'])
         self.kd = int(self.data['kd'])
 
-        self.classes = CLASSES[self.data['class']][0]  # Добавить описание навыков
-        self.race = RACE[self.data['race']][0][0]  # Добавить описание навыков
+        self.classes = CLASSES[self.data['class']][0]
+        self.race = RACE[self.data['race']][0]
+
+        self.classes_skills = CLASSES[self.data['class']][1]
+        self.race_skills = RACE[self.data['race']][2]
 
         self.static = self.data['specifications']['static']
         self.height = int(self.data['specifications']['height'])
@@ -61,7 +68,7 @@ class Player:
         res = f'Карта персонажа (Владелец: {self.owner})\n\n'
 
         res += f'Имя:\t{self.name}\nПол:\t{"Мужской" if self.gender == "M" else "Женский"}\nРаса:\t{self.race}\nКласс:\t{self.classes}\n\n'
-        res += f'Характеристики:\n\tСила:\t{self.static["strength"]}\n\tЛовкость:\t{self.static["dexterity"]}\n\tТелосложение:\t{self.static["constitution"]}\n\tИнтеллект:\t{self.static["intelligence"]}\n\tМудрость:\t{self.static["wisdom"]}\n\tХаризма:\t{self.static["charisma"]}\n\n\tHP:\t{self.hp}\n\tКД:\t{self.kd}\n\n'
+        res += f'Характеристики: \n\tСила:\t{self.static["strength"]} ({(self.static["strength"] - 10) // 2})\n\tЛовкость:\t{self.static["dexterity"]} ({(self.static["dexterity"] - 10) // 2})\n\tТелосложение:\t{self.static["constitution"]} ({(self.static["constitution"] - 10) // 2})\n\tИнтеллект:\t{self.static["intelligence"]} ({(self.static["intelligence"] - 10) // 2})\n\tМудрость:\t{self.static["wisdom"]} ({(self.static["wisdom"] - 10) // 2})\n\tХаризма:\t{self.static["charisma"]} ({(self.static["charisma"] - 10) // 2})\n\n\tHP:\t{self.hp}\n\tКД:\t{self.kd}\n\n'
         res += f'Биометрические данные:\n\tВозраст:\t{self.age} лет\n\tРост:\t{self.height} см.\n\tВес:\t{self.weight} кг.\n\n'
         res += f'Внешность:\n\tТело:\t{recycle(self.appearance["skin"])}\n\tВолосы:\t{recycle(self.appearance["hair"])}\n\tГлаза:\t{recycle(self.appearance["eyes"])}\n\n'
         res += f'Характер ({self.temper[0]}):\t{self.temper[1]}\n\n'
@@ -75,11 +82,26 @@ class Player:
         res += '\n\n'
 
         if self.skill:
-            res += f'Навыки:\n\t' + '\n\t'.join(list(map(lambda x: skell_recycle(x), self.skill)))
+            res += f'Навыки (Личные):\n\t' + '\n\t'.join(list(map(lambda x: skell_recycle(x), self.skill)))
         else:
-            res += f'Навыки:\tОтсутствуют'
+            res += f'Навыки (Личные):\tОтсутствуют'
+
+        res += '\n\n'
+
+        if self.classes_skills:
+            res += f'Навыки (Классовые):\n\t' + '\n\t'.join(
+                list(map(lambda x: main_skell_recycle(x), self.classes_skills)))
+        else:
+            res += f'Навыки (Классовые):\tОтсутствуют'
+
+        res += '\n\n'
+
+        if self.race_skills:
+            res += f'Навыки (Расовые):\n\t' + '\n\t'.join(list(map(lambda x: main_skell_recycle(x), self.race_skills)))
+        else:
+            res += f'Навыки (Расовые):\tОтсутствуют'
 
         return res
 
 
-copy(str(Player('date/players/dima.json')))
+copy(str(Player('date/players/katja.json')))
