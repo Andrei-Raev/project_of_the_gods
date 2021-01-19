@@ -104,4 +104,4 @@ class Player:
         return res
 
 
-copy(str(Player('date/players/katja.json')))
+copy(str(Player('date/players/andrei.json')))
