@@ -8,6 +8,7 @@ import importlib.util
 # Импорт сторонних библиотек
 # from threading import Thread
 from copy import copy
+from datetime import datetime
 
 from PIL import Image, ImageFilter
 from pygame.threads import Thread
@@ -241,16 +242,18 @@ class PauseScreen:
         self.font = pygame.font.Font(r'D:\temp\project_of_the_gods\work_dir\main_menu\font.ttf', 50)
         self.screen = pygame.surface.Surface(size)
         self.background = background
+        self.margin = self.screen.get_size()[0] * 0.25
 
     def render(self, surf: pygame.surface.Surface):
         self.screen = pygame.surface.Surface(size)
         self.screen.set_colorkey((0, 0, 0))
         self.screen = self.screen.convert_alpha()
 
-        for i in range(1000):
+        pygame.draw.rect(self)
+        for i in range(510):
             pygame.draw.line(self.screen,
-                             (0, 0, 0, abs(255 - abs((i - 500) // 2)) if abs(255 - abs((i - 500) // 2)) > 2 else 2),
-                             (i, 0), (i, 1000))
+                             (0, 0, 0, abs((i - 500) // 2)),
+                             (i + self.margin, 0), (i + self.margin, self.screen.get_size()[1]))
 
         surf.blit(self.background, (0, 0))
         surf.blit(self.screen, (0, 0))
@@ -261,7 +264,7 @@ def pause():
     global screen
     is_open = True
     background = blur(screen, 15)
-    background.fill((255, 255, 255))
+    # background.fill((255, 255, 255))
     screen.blit(background, (0, 0))
 
     pause_obj = PauseScreen(size, background)
