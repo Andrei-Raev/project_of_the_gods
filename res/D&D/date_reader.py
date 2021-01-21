@@ -105,3 +105,9 @@ class Player:
 
 
 copy(str(Player('date/players/andrei.json')))
+
+# def gradient(col: int, col2: int, cof: float) -> int:
+#     return round(col * cof + col2 * (1 - cof))
+
+
+# print(list(map(lambda x: gradient(x[0], x[1], 0.5), zip((248, 209, 197), (239, 235, 233)))))
