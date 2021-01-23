@@ -7,7 +7,7 @@ with open('date/game/race.json', 'r', encoding='utf-8') as file:
     RACE = load(file)
 
 
-def recycle(string: str, point=False) -> str:
+def tmp_recycle(string: str, point=False) -> str:
     string = string.strip().capitalize()
     if point:
         if string.endswith('.'):
@@ -21,6 +21,29 @@ def recycle(string: str, point=False) -> str:
             return string
 
 
+def chifr(string):
+    res = ''
+
+    for i in string:
+        res += i  # str(format(ord(i) + 500, "X"))
+
+    return res
+
+
+def recycle(string: str, point=False) -> str:
+    string = string.strip().capitalize()
+    if point:
+        if string.endswith('.'):
+            return chifr(string)
+        else:
+            return chifr(string + '.')
+    else:
+        if string.endswith('.'):
+            return chifr(string[:-1])
+        else:
+            return chifr(string)
+
+
 def skell_recycle(string: str) -> str:
     if '%' in string:
         string, lvl = string.split('%')
@@ -31,7 +54,7 @@ def skell_recycle(string: str) -> str:
 
 
 def main_skell_recycle(lis: list) -> str:
-    return recycle(lis[0]) + ':\t' + lis[1]
+    return recycle(lis[0]) + ':\t' + chifr(lis[1])
 
 
 class Player:
@@ -67,11 +90,11 @@ class Player:
     def __str__(self):
         res = f'Карта персонажа (Владелец: {self.owner})\n\n'
 
-        res += f'Имя:\t{self.name}\nПол:\t{"Мужской" if self.gender == "M" else "Женский"}\nРаса:\t{self.race}\nКласс:\t{self.classes}\n\n'
+        res += f'Имя:\t{chifr(self.name)}\nПол:\t{"Мужской" if self.gender == "M" else "Женский"}\nРаса:\t{chifr(self.race)}\nКласс:\t{chifr(self.classes)}\n\n'
         res += f'Характеристики: \n\tСила:\t{self.static["strength"]} ({(self.static["strength"] - 10) // 2})\n\tЛовкость:\t{self.static["dexterity"]} ({(self.static["dexterity"] - 10) // 2})\n\tТелосложение:\t{self.static["constitution"]} ({(self.static["constitution"] - 10) // 2})\n\tИнтеллект:\t{self.static["intelligence"]} ({(self.static["intelligence"] - 10) // 2})\n\tМудрость:\t{self.static["wisdom"]} ({(self.static["wisdom"] - 10) // 2})\n\tХаризма:\t{self.static["charisma"]} ({(self.static["charisma"] - 10) // 2})\n\n\tHP:\t{self.hp}\n\tКД:\t{self.kd}\n\n'
         res += f'Биометрические данные:\n\tВозраст:\t{self.age} лет\n\tРост:\t{self.height} см.\n\tВес:\t{self.weight} кг.\n\n'
         res += f'Внешность:\n\tТело:\t{recycle(self.appearance["skin"])}\n\tВолосы:\t{recycle(self.appearance["hair"])}\n\tГлаза:\t{recycle(self.appearance["eyes"])}\n\n'
-        res += f'Характер ({self.temper[0]}):\t{self.temper[1]}\n\n'
+        res += f'Характер ({chifr(self.temper[0])}):\t{chifr(self.temper[1])}\n\n'
         res += f'\n----------[Начало предыстории]----------\n{recycle(self.background, point=True)}\n----------[Конец предыстории]----------\n\n'
 
         if self.items:
@@ -104,7 +127,7 @@ class Player:
         return res
 
 
-copy(str(Player('date/players/andrei.json')))
+# copy(str(Player('date/players/2.json')))
 
 # def gradient(col: int, col2: int, cof: float) -> int:
 #     return round(col * cof + col2 * (1 - cof))

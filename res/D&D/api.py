@@ -1,19 +1,22 @@
+from json import load
+
 import telebot
 
 from date_reader import Player
+
+from threading import Thread
 
 from datetime import datetime, timedelta
 from random import randint
 from time import sleep
 
-# print(str(Player('date/players/andrei.json')))
+# print(str(Player('date/players/2.json')))
 
 # from User_Engine import main
-bot = telebot.TeleBot('1273116436:AAGOxkyIYhLyeI8Vh7IuT5TU09h8-a503CY')
+bot = telebot.TeleBot('1273116436:AAG5ZLR1nk0Jl3VOdwm4UT3UK0WQKcdCVQo')
 # ----------[РАБОЧИЕ ПЕРЕМЕННЫЕ]----------
 submit_exit = False
 is_started = False
-bot.send_message(780828132, "Тест")
 # ----------[КЛАВИАТУРЫ]----------
 # -={outline}=-
 # Клавиатура с вариантами кубов
@@ -26,29 +29,20 @@ commands = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyb
 commands.row('/throw', '/stop')
 
 # -={inline}=-
-# Подтверждение выхода от моего имени
-me_submit_exit = telebot.types.InlineKeyboardMarkup()
-yes = telebot.types.InlineKeyboardButton(text="Да", callback_data="m_confirm_exit")
-no = telebot.types.InlineKeyboardButton(text="Нет", callback_data="m_cancel_exit")
-me_submit_exit.add(yes, no)
+# Клавиатура подтверждения
+submit = telebot.types.InlineKeyboardMarkup()
+submit.row_width = 1
+submit.add(telebot.types.InlineKeyboardButton(text="Да", callback_data="1"),
+           telebot.types.InlineKeyboardButton(text="Нет", callback_data="2"))
 
-# Подтверждение выхода от имени Арсения
-submit_exit = telebot.types.InlineKeyboardMarkup()
-yes = telebot.types.InlineKeyboardButton(text="Да", callback_data="confirm_exit")
-no = telebot.types.InlineKeyboardButton(text="Нет", callback_data="cancel_exit")
-submit_exit.add(yes, no)
 
-# Получение списка играющих
-player_list = telebot.types.InlineKeyboardMarkup()
-nemo = telebot.types.InlineKeyboardButton(text="Немо", callback_data="nemo")
-piter = telebot.types.InlineKeyboardButton(text="Питер", callback_data="piter")
-jeims = telebot.types.InlineKeyboardButton(text="Джеймс", callback_data="jeims")
-silva = telebot.types.InlineKeyboardButton(text="Сильва", callback_data="silva")
-teren = telebot.types.InlineKeyboardButton(text="Терен", callback_data="teren")
-idown = telebot.types.InlineKeyboardButton(text="Ядаун", callback_data="yadaun")
-submit = telebot.types.InlineKeyboardButton(text="Подтвердить", callback_data="submit_players")
-player_list.row_width = 1
-player_list.add(nemo, piter, jeims, silva, teren, idown, submit)
+# Создает клавиатуру из списка
+def creat_inline_item_list_keyboard(spisok: list) -> telebot.types.InlineKeyboardMarkup:
+    tmp = telebot.types.InlineKeyboardMarkup()
+    for tmp_item in enumerate(spisok):
+        tmp.add(telebot.types.InlineKeyboardButton(text=tmp_item[1].capitalize(), callback_data=str(tmp_item[0])))
+
+    return tmp
 
 
 # ----------[СИСТЕМНЫЕ ФУНКЦИИ]---------
@@ -74,7 +68,7 @@ def check_group(message):
 
 # ----------[ВНУТРЕИНРОВЫЕ ФУНКЦИИ]----------
 # Бросок куба(бросок и мультибросок куба "Дхх")
-def throw(message):
+'''def throw(message):
     if not message.text.lower().startswith('д'):
         return
     try:
@@ -108,12 +102,12 @@ def throw(message):
                              sum(res) / count) + '\nСумма: ' + str(sum(res)))
 
 
-mes = bot.send_message(780828132, 'Выберите:', reply_markup=player_list)
-
-mi = mes.message_id
-peoples = []
-
-
+# mes = bot.send_message(780828132, 'Выберите:', reply_markup=player_list)
+#
+# mi = mes.message_id
+# peoples = []
+'''
+'''
 @bot.callback_query_handler(func=lambda c: True)
 def select_player(callback):
     ci = 780828132
@@ -166,3 +160,64 @@ def select_player(callback):
                 peoples.append('Ядаун')
             bot.edit_message_text('Выбраны игроки: ' + ', '.join(peoples) + '.', chat_id=ci, message_id=mi,
                                   reply_markup=player_list)
+'''
+
+players_name = {'дима': 0, 'дмитрий': 0, 'гюнтер': 0, 'катя': 1, 'корона': 1, 'андрей': 2, 'ларка': 2, 'ла-рум': 2,
+                'алина': 3, 'листок': 3, 'мак': 4, 'лера': 4, 'янхи': 5, 'егор': 5}
+name_ids = {0: 'гюнтер', 1: 'корона', 2: 'ларка', 3: 'листок', 4: 'мак', 5: 'янхи'}
+
+
+def show_i(name_id):
+    name = name_ids[name_id]
+    with open('date/game/inventory.json', 'r', encoding='utf-8') as json_file:
+        invent = load(json_file)
+        invent = invent[name]
+    tmp_markups = creat_inline_item_list_keyboard(invent)
+    print(type(tmp_markups))
+    bot.send_message(780828132, f'Инвентарь *{name.capitalize()}*:', parse_mode="Markdown",
+                     reply_markup=tmp_markups)
+
+
+def hp_show():
+    res = 'Хиты команды:\n'
+    with open('date/game/hp.json', 'r', encoding='utf-8') as json_file:
+        hp = load(json_file)
+
+    for pl_id in range(6):
+        if pl_id == 4:
+            continue
+        print(pl_id)
+        tmp_pl = Player(f'date/players/{pl_id}.json')
+        res += f'\t*{tmp_pl.name}*:\t{hp[name_ids[pl_id]]}/{tmp_pl.hp}\n'
+
+    bot.send_message(780828132, res.strip(), parse_mode="Markdown")
+
+
+@bot.message_handler()
+def command_execute(message):
+    try:
+        text = message.text.split()
+        command_type, player_id = text[0].lower(), players_name[text[1].lower()]
+    except IndexError:
+        command_type = message.text.lower()
+
+        if command_type.lower() == 'хп' or command_type.lower() == 'hp':
+            return hp_show()
+
+        bot.send_message(780828132, f'Команда *{message.text}* некорректна', parse_mode="Markdown")
+        return
+    except KeyError:
+        bot.send_message(780828132, f'Игрока *{text[1]}* не существует', parse_mode="Markdown")
+        return
+
+    if command_type.lower() == 'и':
+        show_i(player_id)
+
+
+while True:
+    try:
+        bot.polling(none_stop=False)
+
+    except Exception as e:
+        print('ERROR', e, e.__class__.__name__)
+        sleep(1)

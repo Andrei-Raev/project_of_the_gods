@@ -1,11 +1,11 @@
 {
   "name": "",
-  "owner": "Арсений",
+  "owner": "Алина",
   "gender": "",
-  "class": 0,
-  "race": 0,
-  "hp": 0,
-  "kd": 0,
+  "class": "0",
+  "race": "0",
+  "hp": 1,
+  "kd": 1,
   "specifications": {
     "height": 0,
     "weight": 0,
