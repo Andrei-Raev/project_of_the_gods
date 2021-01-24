@@ -166,12 +166,56 @@ players_name = {'дима': 0, 'дмитрий': 0, 'гюнтер': 0, 'катя
                 'алина': 3, 'листок': 3, 'мак': 4, 'лера': 4, 'янхи': 5, 'егор': 5}
 name_ids = {0: 'гюнтер', 1: 'крона', 2: 'ларка', 3: 'листок', 4: 'мак', 5: 'янхи'}
 
-TARGET = 780828132
+TARGET = 1278338237
 last_inventory_message_id = 0
 last_inventory_player_id = 0
 last_inventory_data = ['', '', 0]
 
+count_request = 1
 
+
+def normalize(*args):
+    res = []
+    for i in enumerate(args):
+        if i[0] == 0:
+            res.append(name_ids[i[1]])
+        else:
+            res.append(i[1])
+    return tuple(res)
+
+
+def log(function_to_decorate):
+    def log_decorate(*args):
+        with open('log.txt', 'a', encoding='utf-8') as log_file:
+            log_file.write(
+                f'\n----------[{datetime.now()}]----------\nВыполнена функция: {function_to_decorate.__name__}\nАргументы: {normalize(*args)}')
+        function_to_decorate(*args)
+
+    return log_decorate
+
+
+def send_log():
+    with open('log.txt', 'r', encoding='utf-8') as log_file:
+        log_text = log_file.read()
+
+    open('log.txt', 'w', encoding='utf-8').close()
+
+    while len(log_text) > 4000:
+        bot.send_message(780828132, log_text[:4000])
+        log_text = log_text[4000:]
+    bot.send_message(780828132, log_text[:4000])
+
+
+def cmd(command):
+    eval(command)
+
+
+def ans_edit(string: str) -> str:
+    string = string.replace('\t', '    ')
+    return string
+
+
+# ----------
 def show_inventory_button(name_id):
     global last_inventory_message_id
     name = name_ids[name_id]
@@ -184,6 +228,7 @@ def show_inventory_button(name_id):
     return tmp_mes
 
 
+@log
 def hp_show():
     res = 'Хиты команды:\n'
     with open('date/game/hp.json', 'r', encoding='utf-8') as json_file:
@@ -192,17 +237,26 @@ def hp_show():
     for pl_id in range(6):
         print(pl_id)
         tmp_pl = Player(f'date/players/{pl_id}.json')
-        res += f'\t*{tmp_pl.name}*:\t{hp[name_ids[pl_id]]}/{tmp_pl.hp}\n'
+        if hp[name_ids[pl_id]] < 0:
+            res += f'\t*{tmp_pl.name}*:\t*мертв*\n'
+        else:
+            res += f'\t*{tmp_pl.name}*:\t{hp[name_ids[pl_id]]}/{tmp_pl.hp} ({round((hp[name_ids[pl_id]] / tmp_pl.hp) * 100)}%)'
+            if hp[name_ids[pl_id]] / tmp_pl.hp < .20 and hp[name_ids[pl_id]] != -1:
+                res += ' *Критической состояние!*\n'
+            else:
+                res += '\n'
 
-    bot.send_message(TARGET, res.strip(), parse_mode="Markdown")
+    bot.send_message(TARGET, ans_edit(res.strip()), parse_mode="Markdown")
 
 
+@log
 def carte(pl_id):
     bot.send_message(TARGET, Player(f'date/players/{pl_id}.json')[0])
     bot.send_message(TARGET, Player(f'date/players/{pl_id}.json')[1])
     bot.send_message(TARGET, Player(f'date/players/{pl_id}.json')[2])
 
 
+@log
 def item_list(pl_id):
     name = name_ids[pl_id]
     with open('date/game/inventory.json', 'r', encoding='utf-8') as json_file:
@@ -213,11 +267,12 @@ def item_list(pl_id):
                      parse_mode="Markdown")
 
 
+@log
 def get_item(pl_id, item: str):
     name = name_ids[pl_id]
     with open('date/game/inventory.json', 'r', encoding='utf-8') as json_file:
         invent = load(json_file)
-    invent[name].append(item)
+    invent[name.lower()].append(item)
     with open('date/game/inventory.json', 'w', encoding='utf-8') as json_file:
         dump(invent, json_file, ensure_ascii='utf8')
 
@@ -231,6 +286,7 @@ def del_item(pl_id):
     show_inventory_button(pl_id)
 
 
+@log
 def del_item_f():
     global last_inventory_data
     global last_inventory_player_id
@@ -289,6 +345,7 @@ def lvl_finder(exp: int) -> int:
         return 20
 
 
+@log
 def exp_show():
     with open('date/game/exp.json', 'r', encoding='utf-8') as json_file:
         exp = load(json_file)
@@ -296,22 +353,32 @@ def exp_show():
     for i in exp.keys():
         res += f'*{i.capitalize()}*:\t{lvl_finder(exp[i])} ур. ({exp[i]})\n'
 
-    bot.send_message(TARGET, res, parse_mode="Markdown")
+    bot.send_message(TARGET, ans_edit(res), parse_mode="Markdown")
 
 
+@log
 def get_exp(pl_id, count):
+
     with open('date/game/exp.json', 'r', encoding='utf-8') as json_file:
         exp = load(json_file)
-    exp[name_ids[pl_id]] += count
+
+    if pl_id == "все":
+        for i in exp.keys():
+            exp[i] += count
+    else:
+        exp[name_ids[pl_id]] += count
 
     with open('date/game/exp.json', 'w', encoding='utf-8') as json_file:
         dump(exp, json_file, ensure_ascii='utf8')
+    if pl_id == "все":
+        bot.send_message(TARGET, f'*Всем* выдано *{count}* единиц опыта',
+                         parse_mode="Markdown")
+    else:
+        bot.send_message(TARGET, f'Игроку *{name_ids[pl_id].capitalize()}* выдано *{count}* единиц опыта',
+                         parse_mode="Markdown")
 
-    bot.send_message(TARGET, f'Игроку *{name_ids[pl_id].capitalize()}* выдано {count} единиц опыта',
-                     parse_mode="Markdown")
-    return
 
-
+@log
 def hil(pl_id, hp_count):
     if hp_count < 0:
         return kik(pl_id, hp_count)
@@ -332,10 +399,10 @@ def hil(pl_id, hp_count):
     if hp[name_ids[pl_id]] == int(tmp_pl.hp):
         answer += '\n*Хиты игрока полностью восстановлены!*'
 
-    bot.send_message(TARGET, answer,
-                     parse_mode="Markdown")
+    bot.send_message(TARGET, ans_edit(answer), parse_mode="Markdown")
 
 
+@log
 def kik(pl_id, hp_count):
     with open('date/game/hp.json', 'r', encoding='utf-8') as json_file:
         hp = load(json_file)
@@ -343,44 +410,51 @@ def kik(pl_id, hp_count):
     hp_count = abs(hp_count)
     tmp_pl = Player(f'date/players/{pl_id}.json')
     hp[name_ids[pl_id]] -= hp_count
+    death_answer = ''
 
     if hp[name_ids[pl_id]] < 0:
-        hp[name_ids[pl_id]] = int(tmp_pl.hp)
+        death_answer = f'\n\nИгрок *{tmp_pl.name}* получил критический урон:\n'
+        throw_death = [randint(1, 20) for _ in range(3)]
 
-    # with open('date/game/hp.json', 'w', encoding='utf-8') as json_file:
-    #     dump(hp, json_file, ensure_ascii='utf8')
+        if sum(throw_death) >= 30:
+            death_answer += f'\t*Спасбросок успешен!* ({", ".join(list(map(lambda t: str(t), throw_death)))} (Сумма: *{sum(throw_death)}*))'
+            hp[name_ids[pl_id]] = 0
+        else:
+            death_answer += f'\t*Спасбросок провален!* ({", ".join(list(map(lambda t: str(t), throw_death)))} (Сумма: *{sum(throw_death)}*))\n*Игрок умер :(*'
+            hp[name_ids[pl_id]] = -1
 
-    answer = f'Игроу *{tmp_pl.name}* был нанесен урон на *{hp_count}* хп\nТеперь хиты составляют: {hp[name_ids[pl_id]]}/{tmp_pl.hp} ({round((hp[name_ids[pl_id]] / tmp_pl.hp) * 100)}%)'
+    with open('date/game/hp.json', 'w', encoding='utf-8') as json_file:
+        dump(hp, json_file, ensure_ascii='utf8')
 
-    if hp[name_ids[pl_id]] == int(tmp_pl.hp):
-        answer += '\n*Хиты игрока полностью восстановлены!*'
+    answer = f'Игроку *{tmp_pl.name}* был нанесен урон на *{hp_count}* хп\nТеперь хиты составляют: {hp[name_ids[pl_id]]}/{tmp_pl.hp} ({round((hp[name_ids[pl_id]] / tmp_pl.hp) * 100)}%)' + death_answer
 
-    bot.send_message(TARGET, answer,
-                     parse_mode="Markdown")
+    if hp[name_ids[pl_id]] / tmp_pl.hp < .20 and hp[name_ids[pl_id]] != -1:
+        answer += '\n*Критической состояние!*'
 
+    bot.send_message(TARGET, ans_edit(answer), parse_mode="Markdown")
 
-# https://vk.com/wall-168033729_3489
 
 @bot.message_handler()
 def command_execute(message):
     try:
         text = message.text.split()
-        command_type, player_id = text[0].lower(), players_name[text[1].lower()]
+        if text[1] == 'все' and (text[0].lower() == 'повышение' or text[0].lower() == 'п'):
+            command_type, player_id = text[0].lower(), text[1].lower()
+        else:
+            command_type, player_id = text[0].lower(), players_name[text[1].lower()]
+
         if command_type == 'карта' or command_type == 'к':
             return carte(player_id)  # Готово
-
         elif command_type == 'вещи' or command_type == 'в':
             return item_list(player_id)  # Готово
-
         elif command_type == 'дать' or command_type == 'д':
             return get_item(player_id, text[2])  # Готово
-
         elif command_type == 'убрать' or command_type == 'у':
             return del_item(player_id)  # Готово
         elif command_type == 'лечить' or command_type == 'л':
-            return hil(player_id, int(text[2]))
+            return hil(player_id, int(text[2]))  # Готово
         elif command_type == 'бить' or command_type == 'б':
-            return kik(player_id, int(text[2]))
+            return kik(player_id, int(text[2]))  # Готово
         elif command_type == 'повышение' or command_type == 'п':
             return get_exp(player_id, int(text[2]))  # Готово
 
@@ -393,10 +467,15 @@ def command_execute(message):
             return hp_show()  # Готово
         elif command_type == 'опыт' or command_type == 'о':
             return exp_show()  # Готово
+        elif command_type == 'log':
+            return send_log()
 
         bot.send_message(TARGET, f'Команда *{message.text}* некорректна', parse_mode="Markdown")
         return
     except KeyError:
+        if command_type == 'cmd':
+            return cmd(message.text[4:])
+
         bot.send_message(TARGET, f'Игрока *{text[1]}* не существует', parse_mode="Markdown")
         return
     except ValueError:
@@ -432,5 +511,5 @@ while True:
     try:
         bot.polling(none_stop=False)
     except Exception as e:
-        print(f'----------[{datetime.now()}]----------\nОшибка "', e, e.__class__.__name__, '"')
+        print(f'----------[{datetime.now()}]----------\nОшибка ({e.__class__.__name__})\n{e}')
         sleep(1)
