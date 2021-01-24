@@ -85,7 +85,8 @@ class Player:
         self.background = self.data['specifications']['background']
 
         self.skill = self.data['skill']
-        self.items = self.data['items']
+        with open('date/game/inventory.json', 'r', encoding='utf-8') as json_file:
+            self.items = load(json_file)[self.name.lower()]
 
     def __str__(self):
         res = f'Карта персонажа (Владелец: {self.owner})\n\n'
@@ -95,7 +96,7 @@ class Player:
         res += f'Биометрические данные:\n\tВозраст:\t{self.age} лет\n\tРост:\t{self.height} см.\n\tВес:\t{self.weight} кг.\n\n'
         res += f'Внешность:\n\tТело:\t{recycle(self.appearance["skin"])}\n\tВолосы:\t{recycle(self.appearance["hair"])}\n\tГлаза:\t{recycle(self.appearance["eyes"])}\n\n'
         res += f'Характер ({chifr(self.temper[0])}):\t{chifr(self.temper[1])}\n\n'
-        res += f'\n----------[Начало предыстории]----------\n{recycle(self.background, point=True)}\n----------[Конец предыстории]----------\n\n'
+        res += f'\n----------[Начало предыстории]----------\n{self.background}\n----------[Конец предыстории]----------\n\n'
 
         if self.items:
             res += f'Предметы:\n\t' + '\n\t'.join(list(map(lambda x: recycle(x), self.items)))
@@ -126,8 +127,50 @@ class Player:
 
         return res
 
+    def __getitem__(self, item: int):
+        res = []
 
-# copy(str(Player('date/players/2.json')))
+        tmp = f'Имя:\t{chifr(self.name)}\nПол:\t{"Мужской" if self.gender == "M" else "Женский"}\nРаса:\t{chifr(self.race)}\nКласс:\t{chifr(self.classes)}\n\n'
+        tmp += f'Характеристики: \n\tСила:\t{self.static["strength"]} ({(self.static["strength"] - 10) // 2})\n\tЛовкость:\t{self.static["dexterity"]} ({(self.static["dexterity"] - 10) // 2})\n\tТелосложение:\t{self.static["constitution"]} ({(self.static["constitution"] - 10) // 2})\n\tИнтеллект:\t{self.static["intelligence"]} ({(self.static["intelligence"] - 10) // 2})\n\tМудрость:\t{self.static["wisdom"]} ({(self.static["wisdom"] - 10) // 2})\n\tХаризма:\t{self.static["charisma"]} ({(self.static["charisma"] - 10) // 2})\n\n\tHP:\t{self.hp}\n\tКД:\t{self.kd}\n\n'
+        tmp += f'Биометрические данные:\n\tВозраст:\t{self.age} лет\n\tРост:\t{self.height} см.\n\tВес:\t{self.weight} кг.\n\n'
+        tmp += f'Внешность:\n\tТело:\t{recycle(self.appearance["skin"])}\n\tВолосы:\t{recycle(self.appearance["hair"])}\n\tГлаза:\t{recycle(self.appearance["eyes"])}\n\n'
+        tmp += f'Характер ({chifr(self.temper[0])}):\t{chifr(self.temper[1])}\n\n'
+        res.append(tmp)
+
+        res.append(self.background)
+
+        tmp = ''
+        if self.items:
+            tmp += f'Предметы:\n\t' + '\n\t'.join(list(map(lambda x: recycle(x), self.items)))
+        else:
+            tmp += f'Предметы:\tОтсутствуют'
+
+        tmp += '\n\n'
+
+        if self.skill:
+            tmp += f'Навыки (Личные):\n\t' + '\n\t'.join(list(map(lambda x: skell_recycle(x), self.skill)))
+        else:
+            tmp += f'Навыки (Личные):\tОтсутствуют'
+
+        tmp += '\n\n'
+
+        if self.classes_skills:
+            tmp += f'Навыки (Классовые):\n\t' + '\n\t'.join(
+                list(map(lambda x: main_skell_recycle(x), self.classes_skills)))
+        else:
+            tmp += f'Навыки (Классовые):\tОтсутствуют'
+
+        tmp += '\n\n'
+
+        if self.race_skills:
+            tmp += f'Навыки (Расовые):\n\t' + '\n\t'.join(list(map(lambda x: main_skell_recycle(x), self.race_skills)))
+        else:
+            tmp += f'Навыки (Расовые):\tОтсутствуют'
+        res.append(tmp)
+
+        return res[item]
+
+# print(str(Player('date/players/2.json')))
 
 # def gradient(col: int, col2: int, cof: float) -> int:
 #     return round(col * cof + col2 * (1 - cof))

@@ -1,10 +1,10 @@
 {
-  "name": "",
+  "name": "Листок",
   "owner": "Алина",
   "gender": "",
   "class": "0",
   "race": "0",
-  "hp": 1,
+  "hp": 4,
   "kd": 1,
   "specifications": {
     "height": 0,
@@ -33,6 +33,5 @@
     "race": [],
     "class": []
   },
-  "skill": [],
-  "items": []
+  "skill": []
 }
