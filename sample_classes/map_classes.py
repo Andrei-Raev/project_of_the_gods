@@ -1,4 +1,5 @@
-TYPE_BLOCKS = {1: 'grass', 2: 'stone', }
+
+TYPE_BLOCKS = {1: 'grass', 2: 'stone', 3: 'sand'}
 
 
 class Obekt:
@@ -15,7 +16,7 @@ class Obekt:
     def get_preor(self) -> int:
         return int(self.importance)
 
-    def get_pos(self) -> tuple:
+    def get_cord(self) -> tuple:
         return tuple(self.cord)
 
 
@@ -42,24 +43,11 @@ class Stone(Landscape):
         return 2
 
 
-'''
-class poctr(Obekt):
-    def __init__(self, y, x, preor=2):
-        super().__init__(y, x, preor)
-'''
+class Sand(Landscape):
+    def __init__(self, cord: tuple, importance=1):
+        super().__init__(cord, importance)
 
+    @staticmethod
+    def get_type() -> int:
+        return 3
 
-class Entity(Obekt):
-    def __init__(self, cord, hp, preor=3):
-        super().__init__(cord, preor)
-        self.hp = hp
-
-    def get_hp(self):
-        return self.hpв
-
-
-class Item:
-    def __init__(self):
-        pass
-
-#FFFFFF

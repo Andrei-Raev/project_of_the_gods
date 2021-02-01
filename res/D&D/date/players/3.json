@@ -1,0 +1,37 @@
+{
+  "name": "Листок",
+  "owner": "Алина",
+  "gender": "",
+  "class": "0",
+  "race": "0",
+  "hp": 4,
+  "kd": 1,
+  "specifications": {
+    "height": 0,
+    "weight": 0,
+    "age": 0,
+    "appearance": {
+      "skin": "",
+      "hair": "",
+      "eyes": ""
+    },
+    "temper": [
+      "",
+      ""
+    ],
+    "background": "",
+    "static": {
+      "strength": 0,
+      "constitution": 0,
+      "dexterity": 0,
+      "intelligence": 0,
+      "wisdom": 0,
+      "charisma": 0
+    }
+  },
+  "abilities": {
+    "race": [],
+    "class": []
+  },
+  "skill": []
+}
