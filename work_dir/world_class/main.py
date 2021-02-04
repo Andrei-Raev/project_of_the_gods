@@ -367,9 +367,9 @@ class Entity(pygame.sprite.Sprite):
 
     def get_cord(self):
         pix_x, pix_y = self.cords
-        x = round(pix_x / BLOCK_SIZE) + tmp.center_chunk_cord[0]*16
-        y = round(pix_y / BLOCK_SIZE) + tmp.center_chunk_cord[1]*16
-
+        x = round(pix_x / BLOCK_SIZE) + tmp.center_chunk_cord[0]*16 - 16
+        y = round(pix_y / BLOCK_SIZE) + tmp.center_chunk_cord[1]*16 - 10
+        print(x, y)
         return get_relative_coordinates(x, y)
 
 
@@ -605,7 +605,7 @@ pl = Player(TEXTURES['entity'][0], (255, 255), 5)
 start_time_m = time.time()
 tmp = World(0, (0, 0), 22)
 tmp.init()
-tmp.save_world()
+#tmp.save_world()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
 
 if __name__ == '__main__':

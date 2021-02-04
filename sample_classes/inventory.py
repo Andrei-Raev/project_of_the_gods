@@ -175,7 +175,7 @@ class Item(pygame.sprite.Sprite):
         self.speed = 3
         self.abs_cords = (0, 0)
 
-    def move_to_cords(self, *cordss):
+    def move_to_cords(self, cordss: object) -> object:
         distance = math.sqrt((cordss[0] - self.abs_cords[0]) ** 2 + (cordss[1] - self.abs_cords[1]) ** 2)
 
         tmp_x = self.abs_cords[0] - cordss[0]
