@@ -348,7 +348,7 @@ class Entity(pygame.sprite.Sprite):
         super().__init__(*groups)
         self.cords = cords
         self.image = texture
-        self.rect = self.image.get_rect()
+        self.rect = self.image.get_rect(topleft=self.cords)
         self.speed = ((32 * MAP_COF) * speed)
 
     def move(self, delta_cords):
@@ -367,10 +367,16 @@ class Entity(pygame.sprite.Sprite):
 
     def get_cord(self):
         pix_x, pix_y = self.cords
-        x = round(pix_x / BLOCK_SIZE) + tmp.center_chunk_cord[0]*16 - 16
-        y = round(pix_y / BLOCK_SIZE) + tmp.center_chunk_cord[1]*16 - 10
+        x = round(pix_x / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
+        y = round(pix_y / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
         print(x, y)
         return get_relative_coordinates(x, y)
+
+    def print_cord(self):
+        pix_x, pix_y = self.cords
+        x = round(pix_x / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
+        y = round(pix_y / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
+        return 'x = ' + str(x) + ', ' + 'y = ' + str(y)
 
 
 class Player(Entity):
@@ -600,17 +606,18 @@ TEXTURES = {'block': tmp_block_textures,
             'none': pygame.image.load('res/image/block/none.jpg').convert()}
 
 # ---------- WORK SPASE ----------
-pl = Player(TEXTURES['entity'][0], (255, 255), 5)
+pl = Player(TEXTURES['entity'][0], (width // 2, height // 2), 5)
 
 start_time_m = time.time()
 tmp = World(0, (0, 0), 22)
 tmp.init()
-#tmp.save_world()
+# tmp.save_world()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
 
 if __name__ == '__main__':
     main_running = True
     while main_running:
+        pl.print_cord()
         # world_noise = PerlinNoiseFactory(2, octaves=4, unbias=False, seed=random.randint(1, 55))
         # tmp = World(0, (0, 0))
         # tmp.init()
@@ -630,39 +637,45 @@ if __name__ == '__main__':
             elif event.type == pygame.MOUSEMOTION:
                 pass
                 # pl.move(event.rel)
-
-        '''keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_RIGHT]:
-            map_cords[0] += 5
-        if keys[pygame.K_LEFT]:
-            map_cords[0] -= 5
-        if keys[pygame.K_DOWN]:
-            map_cords[1] += 5
-        if keys[pygame.K_UP]:
-            map_cords[1] -= 5'''
-
-        if map_cords[0] < -map_scale(510):
-            tmp.move_visible_area(1)
-            map_cords[0] = 0
-        elif map_cords[0] > map_scale(510):
-            tmp.move_visible_area(2)
-            map_cords[0] = 0
-        if map_cords[1] < -map_scale(510):
-            tmp.move_visible_area(3)
-            map_cords[1] = 0
-        elif map_cords[1] > map_scale(510):
-            tmp.move_visible_area(4)
-            map_cords[1] = 0
+        xx = pl.cords[0]
+        yy = pl.cords[1]
+        if xx < 100 or xx > 100:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                map_cords[0] += 5
+            if keys[pygame.K_RIGHT]:
+                map_cords[0] -= 5
+            if keys[pygame.K_UP]:
+                map_cords[1] += 5
+            if keys[pygame.K_DOWN]:
+                map_cords[1] -= 5
+        else:
+            if map_cords[0] < -map_scale(510):
+                tmp.move_visible_area(1)
+                map_cords[0] = 0
+            elif map_cords[0] > map_scale(510):
+                tmp.move_visible_area(2)
+                map_cords[0] = 0
+            if map_cords[1] < -map_scale(510):
+                tmp.move_visible_area(3)
+                map_cords[1] = 0
+            elif map_cords[1] > map_scale(510):
+                tmp.move_visible_area(4)
+                map_cords[1] = 0
         pl.tick()
+        print()
         print(pl.get_cord())
-
         # Рендер основного окна
         screen.fill((47, 69, 56))
         tmp.render(screen)
         screen.blit(pl.image, pl.rect)
         display_fps()
         clock.tick(fps)
+        a = pygame.font.Font(None, 35)
+        a = a.render(str(pl.print_cord()), True, (250, 255, 255))
+        x_= 10
+        y_ = 690
+        screen.blit(a, (x_, y_))
         pygame.display.flip()
 
     pygame.quit()  # Завершение работы
