@@ -640,30 +640,46 @@ if __name__ == '__main__':
         xx = pl.cords[0]
         yy = pl.cords[1]
         print(xx, yy)
-        if xx > 100 and xx < 700 and yy > 100 and yy < 600:
+        """
+        
+        
+        
+        
+        
+        """
+
+        if xx > 200 and xx < 600 and yy > 200 and yy < 700:
             print(1000)
             if map_cords[0] < -map_scale(510):
                 tmp.move_visible_area(1)
-                map_cords[0] = 0
+
             elif map_cords[0] > map_scale(510):
-                tmp.move_visible_area(2)
-                map_cords[0] = 0
+                tmp.move_visible_area(1)
+
             if map_cords[1] < -map_scale(510):
                 tmp.move_visible_area(3)
-                map_cords[1] = 0
+
             elif map_cords[1] > map_scale(510):
                 tmp.move_visible_area(4)
-                map_cords[1] = 0
+
         else:
             keys = pygame.key.get_pressed()
-            if keys[pygame.K_LEFT]:
-                map_cords[0] += 5
-            if keys[pygame.K_RIGHT]:
-                map_cords[0] -= 5
-            if keys[pygame.K_UP]:
-                map_cords[1] += 5
-            if keys[pygame.K_DOWN]:
-                map_cords[1] -= 5
+            if xx <= 200:
+                if keys[pygame.K_LEFT]:
+                    map_cords[0] += 5
+                    pl.go(3)
+            if xx >= 1100:
+                if keys[pygame.K_RIGHT]:
+                    map_cords[0] -= 5
+                    pl.go(4)
+            if yy <= 200:
+                if keys[pygame.K_UP]:
+                    map_cords[1] += 5
+                    pl.go(1)
+            if yy >= 500:
+                if keys[pygame.K_DOWN]:
+                    map_cords[1] -= 5
+                    pl.go(2)
 
 
         pl.tick()
