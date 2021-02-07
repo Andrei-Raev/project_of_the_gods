@@ -159,7 +159,7 @@ def get_relative_coordinates(x: int, y: int):
 
 # ---------- PERLIN NOISE ----------
 # Магия!!!
-def smoothstep(t):
+def     smoothstep(t):
     return t * t * (3. - 2. * t)
 
 
@@ -348,6 +348,8 @@ class Entity(pygame.sprite.Sprite):
         super().__init__(*groups)
         self.cords = cords
         self.image = texture
+        self.m_x = 0
+        self.m_y = 0
         self.rect = self.image.get_rect(topleft=self.cords)
         self.speed = ((32 * MAP_COF) * speed)
 
@@ -367,15 +369,14 @@ class Entity(pygame.sprite.Sprite):
 
     def get_cord(self):
         pix_x, pix_y = self.cords
-        x = round(pix_x / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
-        y = round(pix_y / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
-        print(x, y)
+        x = round((pix_x + self.m_x) / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
+        y = round((pix_y + self.m_y) / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
         return get_relative_coordinates(x, y)
 
     def print_cord(self):
         pix_x, pix_y = self.cords
-        x = round(pix_x / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
-        y = round(pix_y / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
+        x = round((pix_x + self.m_x) / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
+        y = round((pix_y + self.m_y) / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
         return 'x = ' + str(x) + ', ' + 'y = ' + str(y)
 
 
@@ -640,51 +641,47 @@ if __name__ == '__main__':
         xx = pl.cords[0]
         yy = pl.cords[1]
         print(xx, yy)
-        """
-        
-        
-        
-        
-        
-        """
+        speed = 2
+        keys = pygame.key.get_pressed()
+        if xx > 200 and xx < 1100 and yy > 200 and yy < 500:
+            if keys[pygame.K_LEFT]:
+                pl.cords = [xx - speed, yy]
 
-        if xx > 200 and xx < 600 and yy > 200 and yy < 700:
-            print(1000)
-            if map_cords[0] < -map_scale(510):
-                tmp.move_visible_area(1)
+            if keys[pygame.K_RIGHT]:
+                pl.cords = [xx + speed, yy]
 
-            elif map_cords[0] > map_scale(510):
-                tmp.move_visible_area(1)
+            if keys[pygame.K_UP]:
+                pl.cords = [xx, yy - speed]
 
-            if map_cords[1] < -map_scale(510):
-                tmp.move_visible_area(3)
-
-            elif map_cords[1] > map_scale(510):
-                tmp.move_visible_area(4)
+            if keys[pygame.K_DOWN]:
+                pl.cords = [xx, yy + speed]
 
         else:
-            keys = pygame.key.get_pressed()
+            s = speed
+            speed = speed * 2
             if xx <= 200:
                 if keys[pygame.K_LEFT]:
-                    map_cords[0] += 5
-                    pl.go(3)
+                    map_cords[0] += speed
+                    pl.cords = [200, yy]
+                    pl.m_x -= speed
             if xx >= 1100:
                 if keys[pygame.K_RIGHT]:
-                    map_cords[0] -= 5
-                    pl.go(4)
+                    map_cords[0] -= speed
+                    pl.cords = [1100, yy]
+                    pl.m_x += speed
             if yy <= 200:
                 if keys[pygame.K_UP]:
-                    map_cords[1] += 5
-                    pl.go(1)
+                    map_cords[1] += speed
+                    pl.cords = [xx, 200]
+                    pl.m_y -= speed
             if yy >= 500:
                 if keys[pygame.K_DOWN]:
-                    map_cords[1] -= 5
-                    pl.go(2)
-
+                    map_cords[1] -= speed
+                    pl.cords = [xx, 500]
+                    pl.m_y += speed
+            speed = s
 
         pl.tick()
-        print()
-        print(pl.get_cord())
         # Рендер основного окна
         screen.fill((47, 69, 56))
         tmp.render(screen)
