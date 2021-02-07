@@ -159,7 +159,7 @@ def get_relative_coordinates(x: int, y: int):
 
 # ---------- PERLIN NOISE ----------
 # Магия!!!
-def smoothstep(t):
+def     smoothstep(t):
     return t * t * (3. - 2. * t)
 
 
@@ -348,12 +348,14 @@ class Entity(pygame.sprite.Sprite):
         super().__init__(*groups)
         self.cords = cords
         self.image = texture
-        self.rect = self.image.get_rect(center=self.cords)
+        self.m_x = 0
+        self.m_y = 0
+        self.rect = self.image.get_rect(topleft=self.cords)
         self.speed = ((32 * MAP_COF) * speed)
 
     def move(self, delta_cords):
         self.cords = [self.cords[0] + delta_cords[0], self.cords[1] + delta_cords[1]]
-        self.rect = self.image.get_rect(center=self.cords)
+        self.rect = self.image.get_rect(topleft=self.cords)
 
     def go(self, direct: int in [1, 2, 3, 4]):
         if direct == 1:
@@ -367,40 +369,29 @@ class Entity(pygame.sprite.Sprite):
 
     def get_cord(self):
         pix_x, pix_y = self.cords
-        x = round(pix_x / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
-        y = round(pix_y / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
+        x = round((pix_x + self.m_x) / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
+        y = round((pix_y + self.m_y) / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
         return get_relative_coordinates(x, y)
 
     def print_cord(self):
         pix_x, pix_y = self.cords
-        x = round(pix_x / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
-        y = round(pix_y / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
+        x = round((pix_x + self.m_x) / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
+        y = round((pix_y + self.m_y) / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
         return 'x = ' + str(x) + ', ' + 'y = ' + str(y)
 
 
 class Player(Entity):
     def tick(self):
         keys = pygame.key.get_pressed()
+
         if keys[pygame.K_RIGHT]:
-            if self.cords[0] > width - width // 5:
-                map_cords[0] -= self.speed // fps
-            else:
-                self.go(3)
+            self.go(3)
         if keys[pygame.K_LEFT]:
-            if self.cords[0] < width // 5:
-                map_cords[0] += self.speed // fps
-            else:
-                self.go(4)
+            self.go(4)
         if keys[pygame.K_DOWN]:
-            if self.cords[1] > height - height // 5:
-                map_cords[1] -= self.speed // fps
-            else:
-                self.go(1)
+            self.go(1)
         if keys[pygame.K_UP]:
-            if self.cords[1] < height // 5:
-                map_cords[1] += self.speed // fps
-            else:
-                self.go(2)
+            self.go(2)
 
 
 # ---------- WORLD ----------
@@ -413,7 +404,7 @@ class World:  # Класс мира
 
     def init(self):
         for y in range(-1, 2):
-            for x in range(-1, 3):
+            for x in range(-1, 2):
                 self.chunks.add(
                     Chunk(seed_from_cord(x, y), (x + self.center_chunk_cord[0], y + self.center_chunk_cord[1])))
 
@@ -433,8 +424,8 @@ class World:  # Класс мира
 
     def render(self, surf):
         wid = 510 * MAP_COF
-        tmp_world_surf = pygame.Surface((map_scale(510) * 4, map_scale(510) * 3))
-        for y in range(-1 + self.center_chunk_cord[1], 3 + self.center_chunk_cord[1]):
+        tmp_world_surf = pygame.Surface((map_scale(510) * 3, map_scale(510) * 3))
+        for y in range(-1 + self.center_chunk_cord[1], 2 + self.center_chunk_cord[1]):
             for x in range(-1 + self.center_chunk_cord[0], 2 + self.center_chunk_cord[0]):
                 chunk_cord = tuple([x, y])
                 try:
@@ -553,6 +544,7 @@ def decode_chunk(file_path):
             tmp_type = chunk_raw[i * 3]
             tmp_cord_x = int.from_bytes(chunk_raw[i * 3 + 1:i * 3 + 2], 'little')
             tmp_cord_y = int.from_bytes(chunk_raw[i * 3 + 2:i * 3 + 3], 'little')
+            print(tmp_type != 1)
             if tmp_type == 1:
                 board['landscape'].add(Grass((tmp_cord_x, tmp_cord_y)))
             elif tmp_type == 2:
@@ -571,7 +563,7 @@ def decode_chunk(file_path):
 # ---------- CONSTANTS ----------
 TYPE_BLOCKS = {1: 'grass', 2: 'stone', 3: 'sand'}
 FULLSCREEN = False
-MAP_COF = 1.3
+MAP_COF = 1
 WORLD_SIZE = {'small': 100, 'medium': 250, 'large': 500}
 WORLD_NOISE_SIZE = 50
 BLOCK_SIZE = MAP_COF * 32
@@ -648,63 +640,46 @@ if __name__ == '__main__':
                 # pl.move(event.rel)
         xx = pl.cords[0]
         yy = pl.cords[1]
+        print(xx, yy)
+        speed = 2
+        keys = pygame.key.get_pressed()
+        if xx > 200 and xx < 1100 and yy > 200 and yy < 500:
+            if keys[pygame.K_LEFT]:
+                pl.cords = [xx - speed, yy]
 
-        if map_cords[0] < -map_scale(510):
-            tmp.move_visible_area(1)
-            map_cords[0] += map_scale(510)
+            if keys[pygame.K_RIGHT]:
+                pl.cords = [xx + speed, yy]
 
-        elif map_cords[0] > map_scale(510):
-            tmp.move_visible_area(2)
-            map_cords[0] -= map_scale(510)
+            if keys[pygame.K_UP]:
+                pl.cords = [xx, yy - speed]
 
-        if map_cords[1] < -map_scale(510):
-            tmp.move_visible_area(3)
-            map_cords[1] += map_scale(510)
-
-        elif map_cords[1] > map_scale(510):
-            tmp.move_visible_area(4)
-            map_cords[1] -= map_scale(510)
-        """
-        
-        
-        
-        
-        
-        """
-        '''
-        if xx > 200 and xx < 600 and yy > 200 and yy < 700:
-            print(1000)
-            if map_cords[0] < -map_scale(510):
-                tmp.move_visible_area(1)
-
-            elif map_cords[0] > map_scale(510):
-                tmp.move_visible_area(1)
-
-            if map_cords[1] < -map_scale(510):
-                tmp.move_visible_area(3)
-
-            elif map_cords[1] > map_scale(510):
-                tmp.move_visible_area(4)
+            if keys[pygame.K_DOWN]:
+                pl.cords = [xx, yy + speed]
 
         else:
-            keys = pygame.key.get_pressed()
+            s = speed
+            speed = speed * 2
             if xx <= 200:
                 if keys[pygame.K_LEFT]:
-                    map_cords[0] += 5
-                    pl.go(3)
+                    map_cords[0] += speed
+                    pl.cords = [200, yy]
+                    pl.m_x -= speed
             if xx >= 1100:
                 if keys[pygame.K_RIGHT]:
-                    map_cords[0] -= 5
-                    pl.go(4)
+                    map_cords[0] -= speed
+                    pl.cords = [1100, yy]
+                    pl.m_x += speed
             if yy <= 200:
                 if keys[pygame.K_UP]:
-                    map_cords[1] += 5
-                    pl.go(1)
+                    map_cords[1] += speed
+                    pl.cords = [xx, 200]
+                    pl.m_y -= speed
             if yy >= 500:
                 if keys[pygame.K_DOWN]:
-                    map_cords[1] -= 5
-                    pl.go(2)'''
-
+                    map_cords[1] -= speed
+                    pl.cords = [xx, 500]
+                    pl.m_y += speed
+            speed = s
 
         pl.tick()
         # Рендер основного окна
@@ -715,7 +690,7 @@ if __name__ == '__main__':
         clock.tick(fps)
         a = pygame.font.Font(None, 35)
         a = a.render(str(pl.print_cord()), True, (250, 255, 255))
-        x_ = 10
+        x_= 10
         y_ = 690
         screen.blit(a, (x_, y_))
         pygame.display.flip()
