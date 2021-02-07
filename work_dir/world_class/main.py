@@ -491,8 +491,6 @@ class Chunk:  # Класс чанка мира
         self.board = {'landscape': set(), 'buildings': set(), 'mechanisms': {}, 'entities': {}}
         for y in range(16):
             for x in range(16):
-                if x == 0 and y == 0:
-                    continue
                 tmp_noise = world_noise((x + (self.cord[1]) * 16) / WORLD_NOISE_SIZE,
                                         (y + (self.cord[0]) * 16) / WORLD_NOISE_SIZE)
                 self.board['landscape'].add(block_constructor(tmp_noise, (x, y)))
