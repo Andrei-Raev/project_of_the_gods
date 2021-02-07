@@ -365,19 +365,16 @@ class Entity(pygame.sprite.Sprite):
         elif direct == 4:
             self.move((-(self.speed // fps), 0))
 
-    def get_cord(self, relative=True):
-        x = round((self.cords[0] - map_cords[0]) / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
-        y = round((self.cords[1] - map_cords[1]) / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
-        if relative:
-            return get_relative_coordinates(x, y)
-        else:
-            return (x, y)
+    def get_cord(self):
+        pix_x, pix_y = self.cords
+        x = round(pix_x / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
+        y = round(pix_y / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
+        return get_relative_coordinates(x, y)
 
     def print_cord(self):
-        global map_cords
-        # print(tmp.center_chunk_cord)
-        x = round((self.cords[0] - map_cords[0]) / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
-        y = round((self.cords[1] - map_cords[1]) / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
+        pix_x, pix_y = self.cords
+        x = round(pix_x / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
+        y = round(pix_y / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
         return 'x = ' + str(x) + ', ' + 'y = ' + str(y)
 
 
@@ -491,8 +488,6 @@ class Chunk:  # Класс чанка мира
         self.board = {'landscape': set(), 'buildings': set(), 'mechanisms': {}, 'entities': {}}
         for y in range(16):
             for x in range(16):
-                if x == 0 and y == 0:
-                    continue
                 tmp_noise = world_noise((x + (self.cord[1]) * 16) / WORLD_NOISE_SIZE,
                                         (y + (self.cord[0]) * 16) / WORLD_NOISE_SIZE)
                 self.board['landscape'].add(block_constructor(tmp_noise, (x, y)))
@@ -709,6 +704,7 @@ if __name__ == '__main__':
                 if keys[pygame.K_DOWN]:
                     map_cords[1] -= 5
                     pl.go(2)'''
+
 
         pl.tick()
         # Рендер основного окна
