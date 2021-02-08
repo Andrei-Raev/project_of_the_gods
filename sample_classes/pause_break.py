@@ -369,7 +369,7 @@ def pause():
     global main_running
     global screen
     is_open = True
-    background = blur(screen, 5)
+    background = blur(screen, 15)
     # background.fill((255, 255, 255))
     screen.blit(background, (0, 0))
 

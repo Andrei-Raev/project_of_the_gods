@@ -138,7 +138,7 @@ def blur(surface, rad):
     raw_str = pygame.image.tostring(surface, strFormat, False)
     image = Image.frombytes(strFormat, surface.get_size(), raw_str)
 
-    image = image.filter(ImageFilter.BoxBlur(rad))
+    image = image.filter(ImageFilter.GaussianBlur(rad))
 
     raw_str = image.tobytes("raw", strFormat)
     result = pygame.image.fromstring(raw_str, image.size, strFormat)

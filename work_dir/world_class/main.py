@@ -606,7 +606,7 @@ tmp_block_textures = [pygame.image.load('res/image/block/none.jpg').convert(), p
     'res/image/block/grass.png').convert(),
                       pygame.image.load('res/image/block/stone.png').convert(),
                       pygame.image.load('res/image/block/sand.png').convert(), pygame.image.load(
-        'res/image/block/water.jpg').convert()]
+        'res/image/block/water.png').convert()]
 for num, el in enumerate(tmp_block_textures):
     tmp_block_textures[num] = pygame.transform.scale(el, (map_scale(32), map_scale(32)))
 
