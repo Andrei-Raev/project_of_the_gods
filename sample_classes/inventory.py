@@ -260,11 +260,10 @@ class InventoryBoard:
 
         for item in self.board:
             if not item.is_grab:
-                self.screen.blit(item.image, item.move_to_cords(margin + item.cords[0] * self.cell_size,
-                                                                margin + item.cords[1] * self.cell_size))
+                self.screen.blit(item.image, item.move_to_cords((margin + item.cords[0] * self.cell_size, margin + item.cords[1] * self.cell_size)))
             else:
-                self.screen.blit(item.image, item.move_to_cords(pygame.mouse.get_pos()[0] - self.top + margin,
-                                                                pygame.mouse.get_pos()[1] - self.left + margin))
+                self.screen.blit(item.image, item.move_to_cords((pygame.mouse.get_pos()[0] - self.top + margin,
+                                                                pygame.mouse.get_pos()[1] - self.left + margin)))
 
     def render(self, a):
         """
@@ -341,7 +340,9 @@ def inventory():
 
     for i in range(1):
         for j in range(1):
-            board.add_item(Item(pygame.image.load('test.png'), 'Тестовый предмет', 'Это просто магия', (i, j)))
+            board.add_item(
+                Item(pygame.image.load(r'D:\temp\project_of_the_gods\sample_classes\test.png'), 'Тестовый предмет',
+                     'Это просто магия', (i, j)))
 
     while is_open:
         for event in pygame.event.get():
@@ -355,6 +356,8 @@ def inventory():
                 if event.key == pygame.K_SPACE:
                     pass
                 if event.key == pygame.K_ESCAPE:
+                    is_open = False
+                if event.key == pygame.K_TAB:
                     is_open = False
             elif event.type == pygame.MOUSEMOTION:
                 pass

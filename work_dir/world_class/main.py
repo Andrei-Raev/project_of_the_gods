@@ -13,6 +13,9 @@ from PIL import Image
 from pygame.threads import Thread
 from screeninfo import get_monitors
 
+# Импорт элементов игры
+from sample_classes import pause_break, inventory
+
 import pygame
 
 pygame.init()
@@ -384,22 +387,22 @@ class Entity(pygame.sprite.Sprite):
 class Player(Entity):
     def tick(self):
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_RIGHT]:
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             if self.cords[0] > width - width // 5:
                 map_cords[0] -= self.speed // fps
             else:
                 self.go(3)
-        if keys[pygame.K_LEFT]:
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             if self.cords[0] < width // 5:
                 map_cords[0] += self.speed // fps
             else:
                 self.go(4)
-        if keys[pygame.K_DOWN]:
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             if self.cords[1] > height - height // 5:
                 map_cords[1] -= self.speed // fps
             else:
                 self.go(1)
-        if keys[pygame.K_UP]:
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
             if self.cords[1] < height // 5:
                 map_cords[1] += self.speed // fps
             else:
@@ -610,7 +613,7 @@ for num, el in enumerate(tmp_block_textures):
 # Загрузка текстур сущьностей
 tmp_entity_textures = [pygame.image.load('res/image/entities/player/main.png').convert_alpha()]
 for num, el in enumerate(tmp_entity_textures):
-    tmp_entity_textures[num] = pygame.transform.scale(el, (map_scale(32), map_scale(32)))
+    tmp_entity_textures[num] = pygame.transform.scale(el, [round(x * MAP_COF * 1.3) for x in el.get_size()])
 
 # Общая сборка
 TEXTURES = {'block': tmp_block_textures,
@@ -645,7 +648,11 @@ if __name__ == '__main__':
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     pass
+                elif event.key == pygame.K_ESCAPE:
+                    pause_break.pause()
                     # tmp.move_visible_area(3)
+                elif event.key == pygame.K_TAB:
+                    inventory.inventory()
             elif event.type == pygame.MOUSEMOTION:
                 pass
                 # pl.move(event.rel)

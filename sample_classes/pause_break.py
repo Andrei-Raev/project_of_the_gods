@@ -133,17 +133,16 @@ def display_fps():
 
 
 def blur(surface, rad):
-    size = surface.get_size()
     strFormat = 'RGBA'
 
     raw_str = pygame.image.tostring(surface, strFormat, False)
     image = Image.frombytes(strFormat, surface.get_size(), raw_str)
 
-    image = image.filter(ImageFilter.BoxBlur(rad))
+    image = image.filter(ImageFilter.GaussianBlur(rad))
 
     raw_str = image.tobytes("raw", strFormat)
     result = pygame.image.fromstring(raw_str, image.size, strFormat)
-    del size, strFormat, raw_str, image
+    del strFormat, raw_str, image
     return result
 
 
@@ -224,6 +223,7 @@ fonts = create_fonts([32, 16, 14, 8])
 map_cords = [0, 0]
 fps = 60
 clock = pygame.time.Clock()
+stoped = False
 
 # ---------- INIT ----------
 if FULLSCREEN:
@@ -317,15 +317,21 @@ class PauseScreen:
             MenuButton(width - width // 4, height - (height // 5.5) * 1, (width * .2, height * .15), width // 80,
                        "Выход", width // 22, self.screen)]
 
+        def exit_f():
+            global stoped
+            stoped = True
+
         self.buttons[2].set_on_click(lambda: exit(), 1)
+        self.buttons[0].set_on_click(exit_f, 1)
 
         self.date_update('')
+        self._render()
 
-    def render(self, surf: pygame.surface.Surface, events):
-
+    def _render(self):
         self.screen = pygame.surface.Surface(size)
         self.screen.set_colorkey((0, 0, 0))
         self.screen = self.screen.convert_alpha()
+        self.screen.fill((0, 0, 22, 10))
 
         pygame.draw.rect(self.screen, (0, 0, 22), (0, 0, width * .4, height))
         for i in range(510):
@@ -338,13 +344,18 @@ class PauseScreen:
 
         for text in enumerate(self.info_text):
             self.screen.blit(text[1], (width * .05, height * (.45 + 0.07 * text[0])))
+        self.background.blit(self.screen, (0, 0))
+        self.screen = copy(self.background)
 
+    def render(self, surf: pygame.surface.Surface, events):
+        tmp_screen = copy(self.screen)
+
+        tmp_events = list(filter(lambda xx: xx.type == pygame.MOUSEBUTTONUP, events))
         for bt in self.buttons:
-            bt.surf = self.screen
-            bt.draw(list(filter(lambda xx: xx.type == pygame.MOUSEBUTTONUP, events)))
+            bt.surf = tmp_screen
+            bt.draw(tmp_events)
 
-        surf.blit(self.background, (0, 0))
-        surf.blit(self.screen, (0, 0))
+        surf.blit(tmp_screen, (0, 0))
 
     def date_update(self, data: str):
         self.time_text = self.font.render('', True, (243, 246, 250))  # Текущее время: 16-35', True, (243, 246, 250))
@@ -358,13 +369,18 @@ def pause():
     global main_running
     global screen
     is_open = True
-    background = blur(screen, 15)
+    background = blur(screen, 5)
     # background.fill((255, 255, 255))
     screen.blit(background, (0, 0))
 
     pause_obj = PauseScreen(size, background)
 
     while is_open:
+        global stoped
+        if stoped:
+            stoped = False
+            return
+
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
@@ -374,8 +390,9 @@ def pause():
                 if event.button == 1:
                     screen.blit(background, (0, 0))
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    pass
+                if event.key == pygame.K_ESCAPE:
+                    main_running = False
+                    return
                 if event.key == pygame.K_ESCAPE:
                     is_open = False
             elif event.type == pygame.MOUSEMOTION:
