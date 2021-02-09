@@ -457,6 +457,8 @@ class Player(Entity):
                 self.move_anim = 0
                 self.isgoing = False
 
+        print(tmp.get_block(self.get_cord(False)))
+
 
 # ---------- WORLD ----------
 class World:  # Класс мира
@@ -506,6 +508,19 @@ class World:  # Класс мира
                 tmp_world_surf.blit(chunk_surf, ((chunk_cord[1] - self.center_chunk_cord[1]) * wid + wid,
                                                  (chunk_cord[0] - self.center_chunk_cord[0]) * wid + wid))
         surf.blit(tmp_world_surf, [i - map_scale(510) for i in map_cords])
+
+    def get_block(self, cords):
+        try:
+            block_cord, chunk_cord = get_relative_coordinates(*cords)
+            tmp_chunk = list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0]
+            tmp_block = list(filter(lambda i: i.get_cord() == block_cord, tmp_chunk.board['landscape']))[0]
+            tmp_chunk.board['landscape'].remove(tmp_block)
+            tmp_chunk.render_chunk()
+            self.render(screen)
+        except:
+            pass
+
+        #return tmp_block
 
     def re_render(self):
         chunk = list()
