@@ -365,10 +365,11 @@ class Entity(pygame.sprite.Sprite):
         self.image = texture['stand']
         self.textures = texture
         self.move_anim = 0
+        self.isgoing = False
         self.rect = self.image.get_rect(center=self.cords)
         self.speed = ((32 * MAP_COF) * speed)
         self.rotate = False
-        self._rotate = False
+        self.counter = 0
 
     def move(self, delta_cords):
         self.cords = [self.cords[0] + delta_cords[0], self.cords[1] + delta_cords[1]]
@@ -402,6 +403,7 @@ class Entity(pygame.sprite.Sprite):
 
 class Player(Entity):
     def tick(self):
+        self.isgoing = False
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.rotate = True
@@ -410,7 +412,7 @@ class Player(Entity):
             else:
                 self.go(3)
 
-            self.move_anim += 1
+            self.isgoing = True
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.rotate = False
             if self.cords[0] < width // 5:
@@ -418,38 +420,42 @@ class Player(Entity):
             else:
                 self.go(4)
 
-            self.move_anim += 1
+            self.isgoing = True
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             if self.cords[1] > height - height // 5:
                 map_cords[1] -= self.speed // fps
             else:
                 self.go(1)
 
-            self.move_anim += 1
+            self.isgoing = True
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             if self.cords[1] < height // 5:
                 map_cords[1] += self.speed // fps
             else:
                 self.go(2)
 
-            self.move_anim += 1
+            self.isgoing = True
 
-        if self.move_anim > 16:
-            self.move_anim = 0
-
-        if self.move_anim == 0:
+        if not self.isgoing:
             self.image = self.textures['stand']
-            if self.rotate != self._rotate:
-                self._rotate = self.rotate
+            if self.rotate:
                 self.image = pygame.transform.flip(self.image, True, False)
+            else:
+                self.image = self.textures['stand']
         else:
-            print(self.move_anim)
+            self.counter += 1
+            if self.counter == 2:
+                self.move_anim += 1
+                self.counter = 0
+
             if self.rotate:
                 self.image = pygame.transform.flip(self.textures['go'][self.move_anim - 1], True, False)
             else:
                 self.image = self.textures['go'][self.move_anim - 1]
 
-            self.move_anim += 1
+            if self.move_anim > 15:
+                self.move_anim = 0
+                self.isgoing = False
 
 
 # ---------- WORLD ----------
@@ -657,7 +663,7 @@ for num, el in enumerate(tmp_block_textures):
 tttt = Image.open('res/image/entities/player/main.png').crop((23, 20, 80, 80))
 tmp_player_textures = {
     "stand": pygame.transform.scale(pygame.image.fromstring(tttt.tobytes("raw", 'RGBA'), tttt.size, 'RGBA'),
-    [round(x * MAP_COF * 1.3) for x in tttt.size])}
+                                    [round(x * MAP_COF * 1.3) for x in tttt.size])}
 
 tmp_player_move_textures = {"go": []}
 for num, el in enumerate(split_sprites('res/image/entities/player/move.png')):
