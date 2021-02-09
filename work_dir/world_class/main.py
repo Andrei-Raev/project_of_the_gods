@@ -4,6 +4,7 @@ import sys
 import math
 import time
 import importlib.util
+from copy import copy
 from itertools import product
 
 # Импорт сторонних библиотек
@@ -158,6 +159,17 @@ def get_relative_coordinates(x: int, y: int):
     x = (x % 16, x // 16)
     y = (y % 16, y // 16)
     return (x[0], y[0]), (x[1], y[1])
+
+
+def split_sprites(path):
+    res = []
+    im = Image.open(path)
+    for i in range(im.size[0] // 80):
+        tmp_im = im.crop((i * 80, 0, (i + 1) * 80, im.size[1]))
+        tmp_im = tmp_im.crop((23, 20, 80 - 10, tmp_im.size[1]))
+
+        res.append(pygame.image.fromstring(tmp_im.tobytes("raw", 'RGBA'), tmp_im.size, 'RGBA'))
+    return res
 
 
 # ---------- PERLIN NOISE ----------
@@ -347,10 +359,12 @@ class Water(Landscape):
 
 # ---------- ENTITIES ----------
 class Entity(pygame.sprite.Sprite):
-    def __init__(self, texture: pygame.image, cords: tuple, speed: float, *groups):  #: pygame.AbstractGroup):
+    def __init__(self, texture: list, cords: tuple, speed: float, *groups):  #: pygame.AbstractGroup):
         super().__init__(*groups)
         self.cords = cords
-        self.image = texture
+        self.image = texture['stand']
+        self.textures = texture
+        self.move_anim = 0
         self.rect = self.image.get_rect(center=self.cords)
         self.speed = ((32 * MAP_COF) * speed)
         self.rotate = False
@@ -376,7 +390,7 @@ class Entity(pygame.sprite.Sprite):
         if relative:
             return get_relative_coordinates(x, y)
         else:
-            return (x, y)
+            return x, y
 
     def print_cord(self):
         global map_cords
@@ -395,30 +409,47 @@ class Player(Entity):
                 map_cords[0] -= self.speed // fps
             else:
                 self.go(3)
+
+            self.move_anim += 1
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.rotate = False
             if self.cords[0] < width // 5:
                 map_cords[0] += self.speed // fps
             else:
                 self.go(4)
+
+            self.move_anim += 1
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             if self.cords[1] > height - height // 5:
                 map_cords[1] -= self.speed // fps
             else:
                 self.go(1)
+
+            self.move_anim += 1
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             if self.cords[1] < height // 5:
                 map_cords[1] += self.speed // fps
             else:
                 self.go(2)
 
-        #if self.rotate != self._rotate:
-        #    self._rotate = self.rotate
-        #    if self.ro
+            self.move_anim += 1
 
-        if self.rotate != self._rotate:
-            self._rotate = self.rotate
-            self.image = pygame.transform.flip(self.image, True, False)
+        if self.move_anim > 16:
+            self.move_anim = 0
+
+        if self.move_anim == 0:
+            self.image = self.textures['stand']
+            if self.rotate != self._rotate:
+                self._rotate = self.rotate
+                self.image = pygame.transform.flip(self.image, True, False)
+        else:
+            print(self.move_anim)
+            if self.rotate:
+                self.image = pygame.transform.flip(self.textures['go'][self.move_anim - 1], True, False)
+            else:
+                self.image = self.textures['go'][self.move_anim - 1]
+
+            self.move_anim += 1
 
 
 # ---------- WORLD ----------
@@ -623,17 +654,23 @@ for num, el in enumerate(tmp_block_textures):
     tmp_block_textures[num] = pygame.transform.scale(el, (map_scale(32), map_scale(32)))
 
 # Загрузка текстур сущьностей
-tmp_entity_textures = [pygame.image.load('res/image/entities/player/main.png').convert_alpha()]
-for num, el in enumerate(tmp_entity_textures):
-    tmp_entity_textures[num] = pygame.transform.scale(el, [round(x * MAP_COF * 1.3) for x in el.get_size()])
+tttt = Image.open('res/image/entities/player/main.png').crop((23, 20, 80, 80))
+tmp_player_textures = {
+    "stand": pygame.transform.scale(pygame.image.fromstring(tttt.tobytes("raw", 'RGBA'), tttt.size, 'RGBA'),
+    [round(x * MAP_COF * 1.3) for x in tttt.size])}
+
+tmp_player_move_textures = {"go": []}
+for num, el in enumerate(split_sprites('res/image/entities/player/move.png')):
+    tmp_player_move_textures['go'].append(pygame.transform.scale(el, [round(x * MAP_COF * 1.3) for x in el.get_size()]))
+tmp_player_textures.update(tmp_player_move_textures)
 
 # Общая сборка
 TEXTURES = {'block': tmp_block_textures,
-            'entity': tmp_entity_textures,
+            'player': tmp_player_textures,
             'none': pygame.image.load('res/image/block/none.jpg').convert()}
 
 # ---------- WORK SPASE ----------
-pl = Player(TEXTURES['entity'][0], (width // 2, height // 2), 7)
+pl = Player(TEXTURES['player'], (width // 2, height // 2), 7)
 
 start_time_m = time.time()
 tmp = World(0, (0, 0), 22)
