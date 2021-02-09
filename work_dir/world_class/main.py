@@ -353,6 +353,8 @@ class Entity(pygame.sprite.Sprite):
         self.image = texture
         self.rect = self.image.get_rect(center=self.cords)
         self.speed = ((32 * MAP_COF) * speed)
+        self.rotate = False
+        self._rotate = False
 
     def move(self, delta_cords):
         self.cords = [self.cords[0] + delta_cords[0], self.cords[1] + delta_cords[1]]
@@ -388,11 +390,13 @@ class Player(Entity):
     def tick(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            self.rotate = True
             if self.cords[0] > width - width // 5:
                 map_cords[0] -= self.speed // fps
             else:
                 self.go(3)
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            self.rotate = False
             if self.cords[0] < width // 5:
                 map_cords[0] += self.speed // fps
             else:
@@ -407,6 +411,14 @@ class Player(Entity):
                 map_cords[1] += self.speed // fps
             else:
                 self.go(2)
+
+        #if self.rotate != self._rotate:
+        #    self._rotate = self.rotate
+        #    if self.ro
+
+        if self.rotate != self._rotate:
+            self._rotate = self.rotate
+            self.image = pygame.transform.flip(self.image, True, False)
 
 
 # ---------- WORLD ----------
@@ -621,7 +633,7 @@ TEXTURES = {'block': tmp_block_textures,
             'none': pygame.image.load('res/image/block/none.jpg').convert()}
 
 # ---------- WORK SPASE ----------
-pl = Player(TEXTURES['entity'][0], (width // 2, height // 2), 5)
+pl = Player(TEXTURES['entity'][0], (width // 2, height // 2), 7)
 
 start_time_m = time.time()
 tmp = World(0, (0, 0), 22)
@@ -721,13 +733,11 @@ if __name__ == '__main__':
         tmp.render(screen)
         screen.blit(pl.image, pl.rect)
         display_fps()
-        clock.tick(fps)
         a = pygame.font.Font(None, 35)
         a = a.render(str(pl.print_cord()), True, (250, 255, 255))
-        x_ = 10
-        y_ = 690
-        screen.blit(a, (x_, y_))
+        screen.blit(a, (10, 690))
         pygame.display.flip()
+        clock.tick(fps)
 
     pygame.quit()  # Завершение работы
 
