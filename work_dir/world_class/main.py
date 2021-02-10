@@ -93,7 +93,7 @@ def save_s(surface):
 
     raw_str = pygame.image.tostring(surface, strFormat, False)
     image = Image.frombytes(strFormat, surface.get_size(), raw_str)
-    image.save(f'test/{round(random.random(), 20)}.png')
+    image.save(f'saved.png')
     del strFormat, raw_str, image
 
 
@@ -166,7 +166,7 @@ def split_sprites(path):
     im = Image.open(path)
     for i in range(im.size[0] // 80):
         tmp_im = im.crop((i * 80, 0, (i + 1) * 80, im.size[1]))
-        tmp_im = tmp_im.crop((23, 20, 80 - 10, tmp_im.size[1]))
+        tmp_im = tmp_im.crop((23, 20, 80 - 10, 82))
 
         res.append(pygame.image.fromstring(tmp_im.tobytes("raw", 'RGBA'), tmp_im.size, 'RGBA'))
     return res
@@ -440,8 +440,6 @@ class Player(Entity):
             self.image = self.textures['stand']
             if self.rotate:
                 self.image = pygame.transform.flip(self.image, True, False)
-            else:
-                self.image = self.textures['stand']
         else:
             self.counter += 1
             if self.counter == 2:
@@ -457,7 +455,18 @@ class Player(Entity):
                 self.move_anim = 0
                 self.isgoing = False
 
-        print(tmp.get_block(self.get_cord(False)))
+        if tmp.get_block(self.get_cord(False)).__class__.__name__ == 'Water':
+            #self.speed = 5
+            self.image = self.textures['swim']
+            if self.rotate:
+                self.image = pygame.transform.flip(self.image, True, False)
+        elif tmp.get_block(self.get_cord(False)).__class__.__name__ == 'Stone':
+            self.image = self.textures['fly'][self.move_anim%6]
+            if self.rotate:
+                self.image = pygame.transform.flip(self.image, True, False)
+        #else:
+        #    self.speed = 7
+        # self.image.fill((0, 0, 0))
 
 
 # ---------- WORLD ----------
@@ -512,15 +521,13 @@ class World:  # Класс мира
     def get_block(self, cords):
         try:
             block_cord, chunk_cord = get_relative_coordinates(*cords)
-            tmp_chunk = list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0]
+            tmp_chunk = list(filter(lambda i: i.get_cord() == chunk_cord[::-1], self.chunks))[0]
             tmp_block = list(filter(lambda i: i.get_cord() == block_cord, tmp_chunk.board['landscape']))[0]
-            tmp_chunk.board['landscape'].remove(tmp_block)
-            tmp_chunk.render_chunk()
-            self.render(screen)
+            return tmp_block
         except:
-            pass
+            return None
 
-        #return tmp_block
+        # return tmp_block
 
     def re_render(self):
         chunk = list()
@@ -675,21 +682,29 @@ for num, el in enumerate(tmp_block_textures):
     tmp_block_textures[num] = pygame.transform.scale(el, (map_scale(32), map_scale(32)))
 
 # Загрузка текстур сущьностей
-tttt = Image.open('res/image/entities/player/main.png').crop((23, 20, 80, 80))
+tttt = Image.open('res/image/entities/player/main.png').crop((23, 20, 80 - 10, 82))
 tmp_player_textures = {
     "stand": pygame.transform.scale(pygame.image.fromstring(tttt.tobytes("raw", 'RGBA'), tttt.size, 'RGBA'),
                                     [round(x * MAP_COF * 1.3) for x in tttt.size])}
+tttt = Image.open('res/image/entities/player/swim.png')
+tmp_player_textures.update({
+    "swim": pygame.transform.scale(pygame.image.fromstring(tttt.tobytes("raw", 'RGBA'), tttt.size, 'RGBA'),
+                                   [round(x * MAP_COF * 1.3) for x in tttt.size])})
 
 tmp_player_move_textures = {"go": []}
 for num, el in enumerate(split_sprites('res/image/entities/player/move.png')):
     tmp_player_move_textures['go'].append(pygame.transform.scale(el, [round(x * MAP_COF * 1.3) for x in el.get_size()]))
 tmp_player_textures.update(tmp_player_move_textures)
 
+tmp_player_move_textures = {"fly": []}
+for num, el in enumerate(split_sprites('res/image/entities/player/fly.png')):
+    tmp_player_move_textures['fly'].append(pygame.transform.scale(el, [round(x * MAP_COF * 1.3) for x in el.get_size()]))
+tmp_player_textures.update(tmp_player_move_textures)
 # Общая сборка
 TEXTURES = {'block': tmp_block_textures,
             'player': tmp_player_textures,
             'none': pygame.image.load('res/image/block/none.jpg').convert()}
-
+# save_s(TEXTURES['player']['stand'])
 # ---------- WORK SPASE ----------
 pl = Player(TEXTURES['player'], (width // 2, height // 2), 7)
 

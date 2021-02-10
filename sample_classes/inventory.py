@@ -17,43 +17,12 @@ import pygame
 
 pygame.init()
 
-# Создание 2 рандомов (для генерации шума и для прочих целей)
-RAND = importlib.util.find_spec('random')
-noise_random = importlib.util.module_from_spec(RAND)
-RAND.loader.exec_module(noise_random)
-sys.modules['noise_random'] = noise_random
-
-random = importlib.util.module_from_spec(RAND)
-RAND.loader.exec_module(random)
-sys.modules['random'] = random
-del RAND
 
 
 # ---------- FUNCTIONS ----------
 # Генерация градиента
 def gradient(col: int, col2: int, cof: float) -> int:
     return round(col * cof + col2 * (1 - cof))
-
-
-# Масштабирование элементов интерфейса
-def render_scale(val: int) -> int:
-    return round(val * COF)
-
-
-# Масштабирование карты
-def map_scale(val: int) -> int:
-    return round(val * MAP_COF)
-
-
-# Генерирует "случайный" сид, исходя из координат
-def seed_from_cord(x: int, y: int) -> int:
-    tmp = x << abs(y)
-    if tmp.bit_length() < 16:
-        return tmp
-    else:
-        while tmp.bit_length() > 16:
-            tmp = round(tmp / 1000)
-        return tmp
 
 
 def save_s(surface):
@@ -64,51 +33,6 @@ def save_s(surface):
     image.save(f'test/{round(random.random(), 20)}.png')
     del strFormat, raw_str, image
 
-
-def bright(surf: pygame.surface.Surface, brightness):
-    image = Image.frombytes('RGBA', surf.get_size(), pygame.image.tostring(surf, 'RGBA', False))
-    for x in range(image.size[0]):
-        for y in range(image.size[1]):
-            r, g, b, a = image.getpixel((x, y))
-
-            red = int(r * brightness)
-            red = min(255, max(0, red))
-
-            green = int(g * brightness)
-            green = min(255, max(0, green))
-
-            blue = int(b * brightness)
-            blue = min(255, max(0, blue))
-
-            image.putpixel((x, y), (red, green, blue, a))
-    del r, g, b, a, red, green, blue, brightness
-    return pygame.image.fromstring(image.tobytes("raw", 'RGBA'), image.size, 'RGBA')
-
-
-def dark(surf: pygame.surface.Surface, brightness):
-    image = Image.frombytes('RGBA', surf.get_size(), pygame.image.tostring(surf, 'RGBA', False))
-    for x in range(image.size[0]):
-        for y in range(image.size[1]):
-            r, g, b, a = image.getpixel((x, y))
-
-            red = int(r // brightness)
-            red = min(255, max(0, red))
-
-            green = int(g // brightness)
-            green = min(255, max(0, green))
-
-            blue = int(b // brightness)
-            blue = min(255, max(0, blue))
-
-            image.putpixel((x, y), (red, green, blue, a))
-    del r, g, b, a, red, green, blue, brightness
-    return pygame.image.fromstring(image.tobytes("raw", 'RGBA'), image.size, 'RGBA')
-
-
-def get_relative_coordinates(x: int, y: int):
-    x = (x % 16, x // 16)
-    y = (y % 16, y // 16)
-    return (x[0], y[0]), (x[1], y[1])
 
 
 # ---------- FPS CLOCK ----------
@@ -266,24 +190,10 @@ class InventoryBoard:
                                                                 pygame.mouse.get_pos()[1] - self.left + margin)))
 
     def render(self, a):
-        """
-        for i in range(self.width):
-            for j in range(self.height):
-                pygame.draw.rect(a, (255, 255, 255),
-                                 (self.top + self.cell_size * i, self.left + self.cell_size * j, self.cell_size - 1,
-                                  self.cell_size - 1), 5, 8)"""
         self.render_main()
         a.blit(self.screen, (self.top - width * 0.02, self.left - width * 0.02))
 
     def click(self, cord: tuple):
-        """print(self.height)
-        pygame.draw.rect(screen, (200, 200, 200),(self.top, self.left,self.top + (self.height-1) * self.cell_size,self.left + (self.width-1) * self.cell_size), 10)
-        print(self.top <= cord[1] <= self.top + self.height * self.cell_size, self.left <= cord[
-            0] <= self.left + (self.width-1) * self.cell_size)
-        if self.top <= cord[0] <= self.top + (self.height-1) * self.cell_size and self.left <= cord[
-            1] <= self.left + self.width * self.cell_size:
-            x = (cord[0] - self.left) // self.cell_size
-            y = (cord[1] - self.top) // self.cell_size"""
         if self.top <= cord[0] <= self.top + self.width * self.cell_size and self.left <= cord[
             1] <= self.left + self.height * self.cell_size:
             x = (cord[0] - self.top) // self.cell_size
@@ -316,11 +226,6 @@ class InventoryBoard:
         self.board.add(item)
 
     def move_item(self, start_cord, end_cord):
-        '''
-        if self.board[start_cord[1]][start_cord[0]] is not None:
-            if self.board[end_cord[1]][end_cord[0]] is None:
-                self.board[end_cord[1]][end_cord[0]] = self.board[start_cord[1]][start_cord[0]]
-                self.board[start_cord[1]][start_cord[0]] = None'''
         if list(filter(lambda x: x.cords == start_cord, self.board)):
             if not list(filter(lambda x: x.cords == end_cord, self.board)):
                 tmp_item = list(filter(lambda x: x.cords == start_cord, self.board))[0]
@@ -375,32 +280,28 @@ def inventory():
 # print("--- %s seconds ---" % (time.time() - start_time))
 
 # ---------- CONSTANTS ----------
-TYPE_BLOCKS = {1: 'grass', 2: 'stone', 3: 'sand'}
 FULLSCREEN = False
-MAP_COF = 1
-WORLD_SIZE = {'small': 100, 'medium': 250, 'large': 500}
-WORLD_NOISE_SIZE = 50
-BLOCK_SIZE = MAP_COF * 32
 
 # ---------- VARIABLES ----------
 fonts = create_fonts([32, 16, 14, 8])
-map_cords = [0, 0]
 fps = 60
 clock = pygame.time.Clock()
 
 # ---------- INIT ----------
-if FULLSCREEN:
-    size = width, height = get_monitors()[0].width, get_monitors()[0].height
-    COF = width / 640
-    screen = pygame.display.set_mode(size, pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.FULLSCREEN)
-else:
-    COF = 2
-    size = width, height = int(640 * COF), int(360 * COF)
-    screen = pygame.display.set_mode(size)
-
-pygame.display.set_caption('Inventory')
-
+COF = 2
+size = width, height = int(640 * COF), int(360 * COF)
+screen = pygame.display.set_mode(size)
 if __name__ == '__main__':
+    if FULLSCREEN:
+        size = width, height = get_monitors()[0].width, get_monitors()[0].height
+        COF = width / 640
+        screen = pygame.display.set_mode(size, pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.FULLSCREEN)
+    else:
+        COF = 2
+        size = width, height = int(640 * COF), int(360 * COF)
+        screen = pygame.display.set_mode(size)
+
+    pygame.display.set_caption('Inventory')
     main_running = True
     im = pygame.image.load('im.png')
 
