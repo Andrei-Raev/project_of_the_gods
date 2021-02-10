@@ -166,7 +166,6 @@ def split_sprites(path):
     im = Image.open(path)
     for i in range(im.size[0] // 80):
         tmp_im = im.crop((i * 80, 0, (i + 1) * 80, im.size[1]))
-        tmp_im = tmp_im.crop((23, 20, 80 - 10, 82))
 
         res.append(pygame.image.fromstring(tmp_im.tobytes("raw", 'RGBA'), tmp_im.size, 'RGBA'))
     return res
@@ -456,15 +455,15 @@ class Player(Entity):
                 self.isgoing = False
 
         if tmp.get_block(self.get_cord(False)).__class__.__name__ == 'Water':
-            #self.speed = 5
+            # self.speed = 5
             self.image = self.textures['swim']
             if self.rotate:
                 self.image = pygame.transform.flip(self.image, True, False)
         elif tmp.get_block(self.get_cord(False)).__class__.__name__ == 'Stone':
-            self.image = self.textures['fly'][self.move_anim%6]
+            self.image = self.textures['fly'][self.move_anim % 6]
             if self.rotate:
                 self.image = pygame.transform.flip(self.image, True, False)
-        #else:
+        # else:
         #    self.speed = 7
         # self.image.fill((0, 0, 0))
 
@@ -682,7 +681,7 @@ for num, el in enumerate(tmp_block_textures):
     tmp_block_textures[num] = pygame.transform.scale(el, (map_scale(32), map_scale(32)))
 
 # Загрузка текстур сущьностей
-tttt = Image.open('res/image/entities/player/main.png').crop((23, 20, 80 - 10, 82))
+tttt = Image.open('res/image/entities/player/main.png')
 tmp_player_textures = {
     "stand": pygame.transform.scale(pygame.image.fromstring(tttt.tobytes("raw", 'RGBA'), tttt.size, 'RGBA'),
                                     [round(x * MAP_COF * 1.3) for x in tttt.size])}
@@ -698,7 +697,8 @@ tmp_player_textures.update(tmp_player_move_textures)
 
 tmp_player_move_textures = {"fly": []}
 for num, el in enumerate(split_sprites('res/image/entities/player/fly.png')):
-    tmp_player_move_textures['fly'].append(pygame.transform.scale(el, [round(x * MAP_COF * 1.3) for x in el.get_size()]))
+    tmp_player_move_textures['fly'].append(
+        pygame.transform.scale(el, [round(x * MAP_COF * 1.3) for x in el.get_size()]))
 tmp_player_textures.update(tmp_player_move_textures)
 # Общая сборка
 TEXTURES = {'block': tmp_block_textures,
@@ -707,6 +707,9 @@ TEXTURES = {'block': tmp_block_textures,
 # save_s(TEXTURES['player']['stand'])
 # ---------- WORK SPASE ----------
 pl = Player(TEXTURES['player'], (width // 2, height // 2), 7)
+
+frame_pass = True
+frame_counter = False
 
 start_time_m = time.time()
 tmp = World(0, (0, 0), 22)
@@ -802,15 +805,18 @@ if __name__ == '__main__':
 
         pl.tick()
         # Рендер основного окна
-        screen.fill((47, 69, 56))
-        tmp.render(screen)
-        screen.blit(pl.image, pl.rect)
-        display_fps()
-        a = pygame.font.Font(None, 35)
-        a = a.render(str(pl.print_cord()), True, (250, 255, 255))
-        screen.blit(a, (10, 690))
-        pygame.display.flip()
-        clock.tick(fps)
+        if frame_pass:
+            if frame_counter:
+                screen.fill((47, 69, 56))
+                tmp.render(screen)
+                screen.blit(pl.image, pl.rect)
+                display_fps()
+                a = pygame.font.Font(None, 35)
+                a = a.render(str(pl.print_cord()), True, (250, 255, 255))
+                screen.blit(a, (10, 690))
+                pygame.display.flip()
+            frame_counter = not frame_counter
+            clock.tick(fps)
 
     pygame.quit()  # Завершение работы
 
