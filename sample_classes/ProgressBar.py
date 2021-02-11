@@ -48,9 +48,9 @@ class Progress_bar:
 
     def set_progress(self, val: int):
         if self.max_progress < val:
-            raise Value_error(f'value ({val}) > max progress ({self.max_progress})')
+            raise ValueError(f'value ({val}) > max progress ({self.max_progress})')
         elif val < 0:
-            raise Value_error(f'value less than zero ({val})')
+            raise ValueError(f'value less than zero ({val})')
 
         self.progress = val
 

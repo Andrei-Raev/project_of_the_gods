@@ -360,6 +360,9 @@ class Water(Landscape):
 class Entity(pygame.sprite.Sprite):
     def __init__(self, texture: list, cords: tuple, speed: float, *groups):  #: pygame.AbstractGroup):
         super().__init__(*groups)
+
+        self.hp = 100
+
         self.cords = cords
         self.image = texture['stand']
         self.textures = texture
@@ -468,7 +471,68 @@ class Player(Entity):
         # self.image.fill((0, 0, 0))
 
 
+class ProgressBar:
+    def __init__(self, surf: pygame.surface.Surface, border: int, border_radius: int, progress: int, max_progress=100):
+        self.color = (243, 246, 250)
+        self.border_radius = border_radius
+        self.border_color = (0, 22, 87)
+        self.x = 0
+        self.y = 0
+        self.height = surf.get_height()
+        self.width = surf.get_width()
+        self.surf = surf
+        self.border_width = border
+        self.progress = progress
+        self.max_progress = max_progress
+        self.bg_color = (0, 0, 34)
+
+        # self.cords = (0, 0)
+
+        # self.anim_hover = 0
+
+        # self.on_click_set = [[False], [False], [False]]
+
+    def draw(self, *_):
+        pygame.draw.rect(self.surf, self.border_color,
+                         (0, 0, self.surf.get_width(), self.surf.get_height()), 0, self.border_radius)
+        pygame.draw.rect(self.surf, self.bg_color,
+                         (self.border_width, self.border_width, self.width - self.border_width * 2,
+                          self.height - self.border_width * 2), 0, self.border_radius)
+        len_prog = (self.width + self.border_width * 2) // self.max_progress * self.progress  # Хрень
+        if self.progress == self.max_progress:
+            len_prog = self.width - self.border_width * 2
+        if self.progress:
+            pygame.draw.rect(self.surf, self.color,
+                             (self.border_width, self.border_width, len_prog, self.height - self.border_width * 2), 0,
+                             self.border_radius)
+
+    def set_progress(self, val: int):
+        if self.max_progress < val:
+            raise ValueError(f'value ({val}) > max progress ({self.max_progress})')
+        elif val < 0:
+            raise ValueError(f'value less than zero ({val})')
+
+        self.progress = val
+
+    def add_progress(self, val: int):
+        self.progress += val
+        if self.progress < 0:
+            self.progress = 0
+        elif self.progress > self.max_progress:
+            self.progress = self.max_progress
+
+
 # ---------- WORLD ----------
+class UI:
+    def __init__(self, max_hp):
+        self.hp_bar = ProgressBar(pygame.surface.Surface((width // 5, height // 20)), 15, 0, 0, max_hp)
+
+    def render(self, surf: pygame.surface.Surface, hp):
+        self.hp_bar.set_progress(hp)
+        self.hp_bar.draw()
+        surf.blit(self.hp_bar.surf, (width - width // 4.5, height // 30))
+
+
 class World:  # Класс мира
     def __init__(self, world_seed, center_chunk_cord, seed):
         self.world_seed = world_seed
@@ -714,6 +778,7 @@ frame_counter = False
 start_time_m = time.time()
 tmp = World(0, (0, 0), 22)
 tmp.init()
+ui = UI(100)
 # tmp.save_world()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
 
@@ -814,6 +879,7 @@ if __name__ == '__main__':
                 a = pygame.font.Font(None, 35)
                 a = a.render(str(pl.print_cord()), True, (250, 255, 255))
                 screen.blit(a, (10, 690))
+                ui.render(screen, pl.hp)
                 pygame.display.flip()
             frame_counter = not frame_counter
             clock.tick(fps)
