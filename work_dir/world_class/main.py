@@ -33,6 +33,8 @@ sys.modules['random'] = random
 del RAND
 
 
+#random.seed(1)
+
 # ---------- FUNCTIONS ----------
 # Генерация градиента
 def gradient(col: int, col2: int, cof: float) -> int:
@@ -189,7 +191,6 @@ class PerlinNoiseFactory(object):
         self.unbias = unbias
         self.scale_factor = 2 * dimension ** -0.5
         self.random = noise_random
-        self.random.seed(seed)
         self.seed = seed
 
         self.gradient = {}
@@ -538,6 +539,7 @@ class World:  # Класс мира
         self.world_seed = world_seed
         self.chunks = set()
         self.center_chunk_cord = center_chunk_cord
+        noise_random.seed(seed)
         self.noise = PerlinNoiseFactory(2, octaves=4, unbias=False, seed=seed)
 
     def init(self):
@@ -776,9 +778,14 @@ frame_pass = True
 frame_counter = False
 
 start_time_m = time.time()
-tmp = World(0, (0, 0), 22)
+tmp = World(0, (0, 0), 10)
+#noise_random.seed(10)
+
+
 tmp.init()
 ui = UI(100)
+for i in range(10):
+    print(noise_random.random())
 # tmp.save_world()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
 
