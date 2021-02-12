@@ -4,14 +4,14 @@ import sys
 import math
 import time
 import importlib.util
-from copy import copy
+# from copy import copy
 from itertools import product
 
 # Импорт сторонних библиотек
 # from threading import Thread
 
 from PIL import Image
-from pygame.threads import Thread
+# from pygame.threads import Thread
 from screeninfo import get_monitors
 
 # Импорт элементов игры
@@ -33,7 +33,7 @@ sys.modules['random'] = random
 del RAND
 
 
-#random.seed(1)
+# random.seed(1)
 
 # ---------- FUNCTIONS ----------
 # Генерация градиента
@@ -368,10 +368,12 @@ class Entity(pygame.sprite.Sprite):
         self.image = texture['stand']
         self.textures = texture
         self.move_anim = 0
-        self.isgoing = False
         self.rect = self.image.get_rect(center=self.cords)
         self.speed = ((32 * MAP_COF) * speed)
+        self.isgoing = False
         self.rotate = False
+        self.fly = False
+        self.main_speed = ((32 * MAP_COF) * speed)
         self.counter = 0
 
     def move(self, delta_cords):
@@ -406,6 +408,7 @@ class Entity(pygame.sprite.Sprite):
 
 class Player(Entity):
     def tick(self):
+        self.fly = False
         self.isgoing = False
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
@@ -439,14 +442,40 @@ class Player(Entity):
 
             self.isgoing = True
 
-        if not self.isgoing:
+        if keys[pygame.K_LSHIFT]:
+            self.fly = True
+
+        if self.fly:
+            self.hp -= 1
+            self.speed = self.main_speed * 1.3
+
+            if self.move_anim > 9:
+                self.move_anim = 0
+            self.image = self.textures['fly'][self.move_anim]
+
+            if self.counter > 3:
+                self.move_anim += 1
+                self.counter = 0
+            self.counter += 1
+            if self.rotate:
+                self.image = pygame.transform.flip(self.image, True, False)
+
+        elif not self.isgoing:
+            self.hp += 1
+            if self.hp > 100:
+                self.hp = 100
+
             self.image = self.textures['stand']
             if self.rotate:
                 self.image = pygame.transform.flip(self.image, True, False)
         else:
+            self.speed = self.main_speed
+
             self.counter += 1
             if self.counter == 2:
                 self.move_anim += 1
+                self.counter = 0
+            elif self.counter > 3:
                 self.counter = 0
 
             if self.rotate:
@@ -458,15 +487,13 @@ class Player(Entity):
                 self.move_anim = 0
                 self.isgoing = False
 
-        if tmp.get_block(self.get_cord(False)).__class__.__name__ == 'Water':
-            # self.speed = 5
+        if tmp.get_block(self.get_cord(False)).__class__.__name__ == 'Water' and not self.fly:
+            self.speed = self.main_speed * 0.6
             self.image = self.textures['swim']
             if self.rotate:
                 self.image = pygame.transform.flip(self.image, True, False)
         elif tmp.get_block(self.get_cord(False)).__class__.__name__ == 'Stone':
-            self.image = self.textures['fly'][self.move_anim % 6]
-            if self.rotate:
-                self.image = pygame.transform.flip(self.image, True, False)
+            pass
         # else:
         #    self.speed = 7
         # self.image.fill((0, 0, 0))
@@ -586,18 +613,13 @@ class World:  # Класс мира
     def get_block(self, cords):
         try:
             block_cord, chunk_cord = get_relative_coordinates(*cords)
-            tmp_chunk = list(filter(lambda i: i.get_cord() == chunk_cord[::-1], self.chunks))[0]
-            tmp_block = list(filter(lambda i: i.get_cord() == block_cord, tmp_chunk.board['landscape']))[0]
+            tmp_chunk = list(filter(lambda x: x.get_cord() == chunk_cord[::-1], self.chunks))[0]
+            tmp_block = list(filter(lambda x: x.get_cord() == block_cord, tmp_chunk.board['landscape']))[0]
             return tmp_block
-        except:
+        except IndexError:
             return None
 
         # return tmp_block
-
-    def re_render(self):
-        chunk = list()
-        dd = list(filter(lambda x: x.get_cord == self.center_chunk_cord, self.center_chunk_cord))[0]
-        print(dd)
 
     def move_visible_area(self, direction: int):  # 1 - вверх, 2 - вниз, 3 - влево, 4 - вправо
         if direction == 1:
@@ -779,13 +801,11 @@ frame_counter = False
 
 start_time_m = time.time()
 tmp = World(0, (0, 0), 10)
-#noise_random.seed(10)
+# noise_random.seed(10)
 
 
 tmp.init()
 ui = UI(100)
-for i in range(10):
-    print(noise_random.random())
 # tmp.save_world()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
 
@@ -834,46 +854,6 @@ if __name__ == '__main__':
         elif map_cords[1] > map_scale(510):
             tmp.move_visible_area(4)
             map_cords[1] -= map_scale(510)
-        """
-
-
-
-
-
-        """
-        '''
-        if xx > 200 and xx < 600 and yy > 200 and yy < 700:
-            print(1000)
-            if map_cords[0] < -map_scale(510):
-                tmp.move_visible_area(1)
-
-            elif map_cords[0] > map_scale(510):
-                tmp.move_visible_area(1)
-
-            if map_cords[1] < -map_scale(510):
-                tmp.move_visible_area(3)
-
-            elif map_cords[1] > map_scale(510):
-                tmp.move_visible_area(4)
-
-        else:
-            keys = pygame.key.get_pressed()
-            if xx <= 200:
-                if keys[pygame.K_LEFT]:
-                    map_cords[0] += 5
-                    pl.go(3)
-            if xx >= 1100:
-                if keys[pygame.K_RIGHT]:
-                    map_cords[0] -= 5
-                    pl.go(4)
-            if yy <= 200:
-                if keys[pygame.K_UP]:
-                    map_cords[1] += 5
-                    pl.go(1)
-            if yy >= 500:
-                if keys[pygame.K_DOWN]:
-                    map_cords[1] -= 5
-                    pl.go(2)'''
 
         pl.tick()
         # Рендер основного окна
@@ -883,9 +863,9 @@ if __name__ == '__main__':
                 tmp.render(screen)
                 screen.blit(pl.image, pl.rect)
                 display_fps()
-                a = pygame.font.Font(None, 35)
-                a = a.render(str(pl.print_cord()), True, (250, 255, 255))
-                screen.blit(a, (10, 690))
+                # a = pygame.font.Font(None, 35)
+                # a = a.render(str(pl.print_cord()), True, (250, 255, 255))
+                # screen.blit(a, (10, 690))
                 ui.render(screen, pl.hp)
                 pygame.display.flip()
             frame_counter = not frame_counter
