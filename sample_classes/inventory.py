@@ -151,6 +151,7 @@ class InventoryBoard:
 
         margin = width * 0.02
         for item in self.board:
+            print((self.board))#, item.cords[0])
             item.abs_cords = (margin + item.cords[0] * self.cell_size, margin + item.cords[1] * self.cell_size)
 
     def render_background(self):
@@ -163,10 +164,10 @@ class InventoryBoard:
         self.inv_background = self.inv_background.convert_alpha()
         margin = width * 0.02
 
-        pygame.draw.rect(self.inv_background, (100, 100, 100),
+        pygame.draw.rect(self.inv_background, (255, 150, 0),
                          (7, 7, (self.cell_size * self.width + width * 0.04 - 7) * tmp_cof,
                           (self.cell_size * self.height + width * 0.04 - 7) * tmp_cof), 0, 55 * tmp_cof)
-        pygame.draw.rect(self.inv_background, (150, 150, 150),
+        pygame.draw.rect(self.inv_background, (50, 50, 255),
                          (0, 0, (self.cell_size * self.width + width * 0.04) * tmp_cof,
                           (self.cell_size * self.height + width * 0.04) * tmp_cof), 10 * tmp_cof, 55 * tmp_cof)
         for i in range(self.width):
@@ -234,20 +235,14 @@ class InventoryBoard:
                 self.board.add(tmp_item)
 
 
-def inventory():
+def inventory(items):
     global main_running
     global screen
     speed = 10
     is_open = True
     background = blur(screen, 15)
     screen.blit(background, (0, 0))
-    board = InventoryBoard([])
-
-    for i in range(1):
-        for j in range(1):
-            board.add_item(
-                Item(pygame.image.load(r'D:\temp\project_of_the_gods\sample_classes\test.png'), 'Тестовый предмет',
-                     'Это просто магия', (i, j)))
+    board = InventoryBoard(items)
 
     while is_open:
         for event in pygame.event.get():

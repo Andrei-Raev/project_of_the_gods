@@ -1,14 +1,17 @@
 # ---------- IMPORTS ----------
 # Импорт системных библиотек
+import os
 import sys
 import math
 import time
 import importlib.util
 # from copy import copy
+from copy import copy
 from itertools import product
 
 # Импорт сторонних библиотек
 # from threading import Thread
+from pprint import pprint
 
 from PIL import Image
 # from pygame.threads import Thread
@@ -18,6 +21,8 @@ from screeninfo import get_monitors
 from sample_classes import pause_break, inventory
 
 import pygame
+
+from work_dir.world_class.classes import CursObj, load_textures, Dress
 
 pygame.init()
 
@@ -169,7 +174,7 @@ def split_sprites(path):
     for i in range(im.size[0] // 80):
         tmp_im = im.crop((i * 80, 0, (i + 1) * 80, im.size[1]))
 
-        res.append(pygame.image.fromstring(tmp_im.tobytes("raw", 'RGBA'), tmp_im.size, 'RGBA'))
+        res.append(pygame.image.fromstring(tmp_im.tobytes("raw", 'RGBA'), tmp_im.size, 'RGBA').convert_alpha())
     return res
 
 
@@ -349,7 +354,7 @@ class Water(Landscape):
         return 4
 
     def get_super_texture(self):
-        cof = ((2 * (self.water_level + 16000) / 20000))
+        cof = (2 * (self.water_level + 16000) / 20000)
         return dark(TEXTURES['block'][4], cof)
 
 
@@ -407,6 +412,12 @@ class Entity(pygame.sprite.Sprite):
 
 
 class Player(Entity):
+    def __init__(self, texture: list, cords: tuple, speed: float, *groups):
+
+        super().__init__(texture, cords, speed, *groups)
+        self.wear_clothes = [Dress('Стандартный визер', TEXTURES['clothes']['viser'])]
+        self.mode = 'stand'
+
     def tick(self):
         self.fly = False
         self.isgoing = False
@@ -446,6 +457,8 @@ class Player(Entity):
             self.fly = True
 
         if self.fly:
+            self.mode = 'fly'
+
             self.hp -= 1
             self.speed = self.main_speed * 1.3
 
@@ -461,6 +474,8 @@ class Player(Entity):
                 self.image = pygame.transform.flip(self.image, True, False)
 
         elif not self.isgoing:
+            self.mode = 'stand'
+
             self.hp += 1
             if self.hp > 100:
                 self.hp = 100
@@ -469,6 +484,7 @@ class Player(Entity):
             if self.rotate:
                 self.image = pygame.transform.flip(self.image, True, False)
         else:
+            self.mode = 'move'
             self.speed = self.main_speed
 
             self.counter += 1
@@ -488,12 +504,16 @@ class Player(Entity):
                 self.isgoing = False
 
         if tmp.get_block(self.get_cord(False)).__class__.__name__ == 'Water' and not self.fly:
+            self.mode = 'swim'
             self.speed = self.main_speed * 0.6
             self.image = self.textures['swim']
             if self.rotate:
                 self.image = pygame.transform.flip(self.image, True, False)
         elif tmp.get_block(self.get_cord(False)).__class__.__name__ == 'Stone':
             pass
+        self.image = copy(self.image)
+        for item in self.wear_clothes:
+            item.render(self.image, self.mode, self.move_anim, self.rotate)
         # else:
         #    self.speed = 7
         # self.image.fill((0, 0, 0))
@@ -554,11 +574,15 @@ class ProgressBar:
 class UI:
     def __init__(self, max_hp):
         self.hp_bar = ProgressBar(pygame.surface.Surface((width // 5, height // 20)), 15, 0, 0, max_hp)
+        self.curs = [CursObj()]
 
     def render(self, surf: pygame.surface.Surface, hp):
         self.hp_bar.set_progress(hp)
         self.hp_bar.draw()
         surf.blit(self.hp_bar.surf, (width - width // 4.5, height // 30))
+
+        for obj in self.curs:
+            obj.render(surf)
 
 
 class World:  # Класс мира
@@ -788,16 +812,20 @@ for num, el in enumerate(split_sprites('res/image/entities/player/fly.png')):
     tmp_player_move_textures['fly'].append(
         pygame.transform.scale(el, [round(x * MAP_COF * 1.3) for x in el.get_size()]))
 tmp_player_textures.update(tmp_player_move_textures)
+
+tmp_clothes_textures = {}
+
+for texture in os.listdir(r'res\image\clothes'):
+    tmp_clothes_textures.update({texture: load_textures(r"res/image/clothes/" + texture, MAP_COF)})
 # Общая сборка
 TEXTURES = {'block': tmp_block_textures,
             'player': tmp_player_textures,
-            'none': pygame.image.load('res/image/block/none.jpg').convert()}
+            'none': pygame.image.load('res/image/block/none.jpg').convert(),
+            'clothes': tmp_clothes_textures}
 # save_s(TEXTURES['player']['stand'])
 # ---------- WORK SPASE ----------
 pl = Player(TEXTURES['player'], (width // 2, height // 2), 7)
-
-frame_pass = True
-frame_counter = False
+frame_pass, frame_counter = True, False
 
 start_time_m = time.time()
 tmp = World(0, (0, 0), 10)
@@ -832,7 +860,7 @@ if __name__ == '__main__':
                     pause_break.pause()
                     # tmp.move_visible_area(3)
                 elif event.key == pygame.K_TAB:
-                    inventory.inventory()
+                    inventory.inventory([it.get_item() for it in pl.wear_clothes])
             elif event.type == pygame.MOUSEMOTION:
                 pass
                 # pl.move(event.rel)
