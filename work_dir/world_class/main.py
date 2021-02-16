@@ -13,7 +13,7 @@ from itertools import product
 # from threading import Thread
 from pprint import pprint
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageColor
 # from pygame.threads import Thread
 from screeninfo import get_monitors
 
@@ -100,7 +100,7 @@ def save_s(surface):
 
     raw_str = pygame.image.tostring(surface, strFormat, False)
     image = Image.frombytes(strFormat, surface.get_size(), raw_str)
-    image.save(f'saved.png')
+    image.show()  # save(f'saved.png')
     del strFormat, raw_str, image
 
 
@@ -415,6 +415,9 @@ class Player(Entity):
     def __init__(self, texture: list, cords: tuple, speed: float, *groups):
 
         super().__init__(texture, cords, speed, *groups)
+
+        self.hp = 150
+        self.vitality = 100
         self.wear_clothes = [Dress('Стандартный визер', TEXTURES['clothes']['viser'])]
         self.mode = 'stand'
 
@@ -518,6 +521,15 @@ class Player(Entity):
         #    self.speed = 7
         # self.image.fill((0, 0, 0))
 
+    def get_texture(self) -> pygame.surface.Surface:
+        image = self.textures['stand']
+
+        image = copy(image)
+        for item in self.wear_clothes:
+            item.render(image, self.mode, self.move_anim, self.rotate)
+
+        return image
+
 
 class ProgressBar:
     def __init__(self, surf: pygame.surface.Surface, border: int, border_radius: int, progress: int, max_progress=100):
@@ -568,6 +580,32 @@ class ProgressBar:
             self.progress = 0
         elif self.progress > self.max_progress:
             self.progress = self.max_progress
+
+
+#
+#
+#
+#
+
+
+class Indicator(pygame.sprite.Sprite):
+    def __init__(self, player: Player, *groups):
+        super().__init__(*groups)
+
+        raw_str = pygame.image.tostring(pygame.transform.flip(player.get_texture(), True, False), "RGBA", False)
+        image = Image.new("RGBA", player.get_texture().get_size(), (255, 255, 250, 255))
+        image.alpha_composite(Image.frombytes("RGBA", player.get_texture().get_size(), raw_str))
+        image = image.crop((round(image.size[0] * .35), round(image.size[1] * .3),
+                            round(image.size[0] * .75), round(image.size[1] * .7)))
+        # Рисование
+        draw = ImageDraw.Draw(image)
+        draw.rectangle((0, 0, *image.size), outline=(0, 22, 87, 255), width=5)
+
+        self.image = pygame.image.fromstring(image.tobytes("raw", "RGBA"), image.size, "RGBA")
+        # self.image = pygame.transform.scale2x(self.image)
+
+    def save_s(self):
+        save_s(self.image)
 
 
 # ---------- WORLD ----------
@@ -855,6 +893,10 @@ print(len(tmp.get_world()))
 for i in tmp.get_world():
     print(i)
 if __name__ == '__main__':
+
+    player_state = Indicator(pl)
+    player_state.save_s()
+
     main_running = True
     while main_running:
         pl.print_cord()

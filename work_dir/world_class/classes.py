@@ -72,10 +72,15 @@ class Dress(Sprite):
         if mode in ['stand', 'swim']:
             anim = 0
 
+        if anim > 9:
+            anim = 9
+
         self.image = self.textures[mode][anim]
+
         if rotate:
             self.image = flip(self.image, True, False)
         surf.blit(self.image, (0, 0))
 
     def get_item(self):
         return self.item
+
