@@ -417,11 +417,21 @@ class Player(Entity):
         super().__init__(texture, cords, speed, *groups)
 
         self.hp = 150
+        self.max_hp = self.hp
+
+        self.vitality = 500
+        self.max_vitality = self.vitality
+
         self.vitality = 100
         self.wear_clothes = [Dress('Стандартный визер', TEXTURES['clothes']['viser'])]
         self.mode = 'stand'
 
     def tick(self):
+        if self.vitality > self.max_vitality:
+            self.vitality = self.max_vitality
+        if self.hp > self.max_hp:
+            self.hp = self.max_hp
+
         self.fly = False
         self.isgoing = False
         keys = pygame.key.get_pressed()
@@ -462,7 +472,7 @@ class Player(Entity):
         if self.fly:
             self.mode = 'fly'
 
-            self.hp -= 1
+            self.vitality -= 1
             self.speed = self.main_speed * 1.3
 
             if self.move_anim > 9:
@@ -479,7 +489,7 @@ class Player(Entity):
         elif not self.isgoing:
             self.mode = 'stand'
 
-            self.hp += 1
+            self.vitality += 1
             if self.hp > 100:
                 self.hp = 100
 
@@ -487,6 +497,7 @@ class Player(Entity):
             if self.rotate:
                 self.image = pygame.transform.flip(self.image, True, False)
         else:
+            self.vitality += 1
             self.mode = 'move'
             self.speed = self.main_speed
 
@@ -601,8 +612,30 @@ class Indicator(pygame.sprite.Sprite):
         draw = ImageDraw.Draw(image)
         draw.rectangle((0, 0, *image.size), outline=(0, 22, 87, 255), width=5)
 
-        self.image = pygame.image.fromstring(image.tobytes("raw", "RGBA"), image.size, "RGBA")
-        # self.image = pygame.transform.scale2x(self.image)
+        image = (pygame.image.fromstring(image.tobytes("raw", "RGBA"), image.size, "RGBA"))
+        self.avator = pygame.transform.scale(image, [i * 2 for i in image.get_size()])
+        self.main_image = pygame.surface.Surface((self.avator.get_size()[0] * 3, self.avator.get_size()[1]))
+        self.main_image.fill((10, 0, 0))
+        self.main_image.set_colorkey((10, 0, 0))
+        self.main_image.convert_alpha()
+        self.main_image.fill((0, 22, 87, 100))
+
+    def update(self, player: Player, *args, **kwargs) -> None:
+        self.image = copy(self.main_image)
+        self.image.blit(self.avator, (0, 0))
+
+        pygame.draw.rect(self.image, (200, 10, 10),
+                         (self.image.get_width() - self.avator.get_width() * 2, self.image.get_height() / 3 - 7,
+                          self.image.get_width() + self.image.get_width() * (player.hp / player.max_hp) * 0 - 130, 15))
+        pygame.draw.rect(self.image, (224, 220, 0),
+                         (self.image.get_width() - self.avator.get_width() * 2,
+                          self.image.get_height() - self.image.get_height() / 3 - 7,
+                          self.image.get_width() * (player.vitality / player.max_vitality) - 130,
+                          15))
+        print(player.vitality / player.max_vitality, player.vitality)
+
+    def render(self, surf):
+        surf.blit(self.image, (width * .06, height * .06))
 
     def save_s(self):
         save_s(self.image)
@@ -611,13 +644,17 @@ class Indicator(pygame.sprite.Sprite):
 # ---------- WORLD ----------
 class UI:
     def __init__(self, max_hp):
-        self.hp_bar = ProgressBar(pygame.surface.Surface((width // 5, height // 20)), 15, 0, 0, max_hp)
+        self.indicator = Indicator(pl)
+
         self.curs = [CursObj()]
 
-    def render(self, surf: pygame.surface.Surface, hp):
-        self.hp_bar.set_progress(hp)
-        self.hp_bar.draw()
-        surf.blit(self.hp_bar.surf, (width - width // 4.5, height // 30))
+    def render(self, surf: pygame.surface.Surface, _):
+        # self.hp_bar.set_progress(hp)
+        # self.hp_bar.draw()
+        # surf.blit(self.hp_bar.surf, (width - width // 4.5, height // 30))
+
+        self.indicator.update(pl)
+        self.indicator.render(surf)
 
         for obj in self.curs:
             obj.render(surf)
@@ -895,7 +932,7 @@ for i in tmp.get_world():
 if __name__ == '__main__':
 
     player_state = Indicator(pl)
-    player_state.save_s()
+    # player_state.save_s()
 
     main_running = True
     while main_running:
