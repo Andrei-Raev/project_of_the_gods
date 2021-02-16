@@ -662,6 +662,20 @@ class World:  # Класс мира
         for i in self.chunks:
             i.save(f'save_data/{i.get_cord()}.ch')
 
+    def get_world(self):
+        q = []
+        for i in range(len(self.chunks) * 2):
+            q.append([])
+        for i in self.chunks:
+            i = str(i)
+            for g in range(16):
+                for j in range(16):
+                    if 'Water' in i.split(', ')[g * j]:
+                        q[g].append(1)
+                    else:
+                        q[g].append(0)
+        return q
+
 
 class Chunk:  # Класс чанка мира
     def __init__(self, seed: int, cord: (int, int)):
@@ -707,7 +721,7 @@ class Chunk:  # Класс чанка мира
         return tuple(self.cord)
 
     def __str__(self):
-        return f'Chunk {self.cord}'
+        return str(self.board['landscape'])
 
     def load(self):
         self.board = decode_chunk(self.cord)
@@ -797,6 +811,7 @@ tttt = Image.open('res/image/entities/player/main.png')
 tmp_player_textures = {
     "stand": pygame.transform.scale(pygame.image.fromstring(tttt.tobytes("raw", 'RGBA'), tttt.size, 'RGBA'),
                                     [round(x * MAP_COF * 1.3) for x in tttt.size])}
+
 tttt = Image.open('res/image/entities/player/swim.png')
 tmp_player_textures.update({
     "swim": pygame.transform.scale(pygame.image.fromstring(tttt.tobytes("raw", 'RGBA'), tttt.size, 'RGBA'),
@@ -836,7 +851,9 @@ tmp.init()
 ui = UI(100)
 # tmp.save_world()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
-
+print(len(tmp.get_world()))
+for i in tmp.get_world():
+    print(i)
 if __name__ == '__main__':
     main_running = True
     while main_running:
@@ -884,6 +901,7 @@ if __name__ == '__main__':
             map_cords[1] -= map_scale(510)
 
         pl.tick()
+
         # Рендер основного окна
         if frame_pass:
             if frame_counter:
