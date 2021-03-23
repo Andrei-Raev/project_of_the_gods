@@ -13,11 +13,14 @@ from itertools import product
 # from threading import Thread
 from pprint import pprint
 
+import PIL
 from PIL import Image, ImageDraw, ImageColor
 # from pygame.threads import Thread
 from screeninfo import get_monitors
 
 # Импорт элементов игры
+from typing import List
+
 from sample_classes import pause_break, inventory
 
 import pygame
@@ -370,7 +373,10 @@ class Entity(pygame.sprite.Sprite):
         self.hp = 100
 
         self.cords = cords
-        self.image = texture['stand']
+        try:
+            self.image = texture['stand']
+        except:
+            self.image = texture
         self.textures = texture
         self.move_anim = 0
         self.rect = self.image.get_rect(center=self.cords)
@@ -409,6 +415,24 @@ class Entity(pygame.sprite.Sprite):
         x = round((self.cords[0] - map_cords[0]) / BLOCK_SIZE) + tmp.center_chunk_cord[1] * 16
         y = round((self.cords[1] - map_cords[1]) / BLOCK_SIZE) + tmp.center_chunk_cord[0] * 16
         return 'x = ' + str(x) + ', ' + 'y = ' + str(y)
+
+
+class Item(Entity):
+    def __init__(self, texture: list, cords: tuple, speed: float, item_info: list, *groups):
+        super().__init__(texture, cords, speed, *groups)
+        self.title = item_info[0]
+        self.info = item_info
+
+    def get_world_item(self):
+        return self.textures, self.cords
+
+    def render(self, surf, ccc):
+        ccc1 = copy(ccc)
+        ccc = ccc1[0] + 1, ccc1[1] + 1
+        pygame.draw.circle(surf,(0,0,0), ((self.rect.x + ccc[0] * map_scale(510)), (self.rect.y + ccc[1] * map_scale(510))), 100)
+        surf.blit(self.image, self.rect)
+        print(self.rect)
+        # save_s(surf)
 
 
 class Player(Entity):
@@ -603,14 +627,14 @@ class Indicator(pygame.sprite.Sprite):
     def __init__(self, player: Player, *groups):
         super().__init__(*groups)
 
-        raw_str = pygame.image.tostring(pygame.transform.flip(player.get_texture(), True, False), "RGBA", False)
-        image = Image.new("RGBA", player.get_texture().get_size(), (255, 255, 250, 255))
-        image.alpha_composite(Image.frombytes("RGBA", player.get_texture().get_size(), raw_str))
+        tmp_im = Image.open('res/image/entities/player/main.png').transpose(PIL.Image.FLIP_LEFT_RIGHT)
+        image = Image.new("RGBA", tmp_im.size, (255, 255, 250, 255))
+        image.alpha_composite(tmp_im)
         image = image.crop((round(image.size[0] * .35), round(image.size[1] * .3),
                             round(image.size[0] * .75), round(image.size[1] * .7)))
         # Рисование
         draw = ImageDraw.Draw(image)
-        draw.rectangle((0, 0, *image.size), outline=(0, 22, 87, 255), width=5)
+        draw.rectangle((0, 0, *image.size), outline=(0, 22, 87, 255), width=2)
 
         image = (pygame.image.fromstring(image.tobytes("raw", "RGBA"), image.size, "RGBA"))
         self.avator = pygame.transform.scale(image, [i * 2 for i in image.get_size()])
@@ -691,11 +715,14 @@ class World:  # Класс мира
     def render(self, surf):
         wid = 510 * MAP_COF
         tmp_world_surf = pygame.Surface((map_scale(510) * 4, map_scale(510) * 3))
+        tmp_items = list()
+
         for y in range(-1 + self.center_chunk_cord[1], 3 + self.center_chunk_cord[1]):
             for x in range(-1 + self.center_chunk_cord[0], 2 + self.center_chunk_cord[0]):
                 chunk_cord = tuple([x, y])
                 try:
                     chunk_surf = list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0].get_s()
+                    tmp_items += list(filter(lambda i: i.get_cord() == chunk_cord, self.chunks))[0].get_items()
                 except IndexError:
                     # raise ValueError(f'Chunk ({chunk_cord}) not found!')
                     self.chunks.add(Chunk(seed_from_cord(*chunk_cord), chunk_cord))
@@ -707,6 +734,12 @@ class World:  # Класс мира
 
                 tmp_world_surf.blit(chunk_surf, ((chunk_cord[1] - self.center_chunk_cord[1]) * wid + wid,
                                                  (chunk_cord[0] - self.center_chunk_cord[0]) * wid + wid))
+
+        for item in tmp_items:
+            item.render(tmp_world_surf, self.center_chunk_cord)
+            #print(item)
+            #tmp_world_surf.fill((0,0,0))
+
         surf.blit(tmp_world_surf, [i - map_scale(510) for i in map_cords])
 
     def get_block(self, cords):
@@ -718,7 +751,10 @@ class World:  # Класс мира
         except IndexError:
             return None
 
-        # return tmp_block
+    def add_item(self, item: Item):
+        chunk_cord = item.get_cord()[1]
+        tmp_chunk = list(filter(lambda x: x.get_cord() == chunk_cord, self.chunks))[0]
+        tmp_chunk.board['entities']['items'].add(item)
 
     def move_visible_area(self, direction: int):  # 1 - вверх, 2 - вниз, 3 - влево, 4 - вправо
         if direction == 1:
@@ -757,12 +793,12 @@ class Chunk:  # Класс чанка мира
         self.seed = seed
         self.cord = cord
 
-        self.board = {'landscape': set(), 'buildings': {}, 'mechanisms': {}, 'entities': {}}
+        self.board = {'landscape': set(), 'buildings': {}, 'mechanisms': {}, 'entities': {'items': {}}}
         self.ground = pygame.Surface((map_scale(510), map_scale(510)))
 
     def generate_chunk(self, world_noise) -> None:
         del self.board
-        self.board = {'landscape': set(), 'buildings': set(), 'mechanisms': {}, 'entities': {}}
+        self.board = {'landscape': set(), 'buildings': set(), 'mechanisms': {}, 'entities': {'items': set()}}
         for y in range(16):
             for x in range(16):
                 tmp_noise = world_noise((x + (self.cord[1]) * 16) / WORLD_NOISE_SIZE,
@@ -788,6 +824,9 @@ class Chunk:  # Класс чанка мира
         # f = pygame.font.Font(None, 250)
         # t = f.render(f'{self.cord}', True, (255, 255, 255))
         # self.ground.blit(t, (25, 25))
+
+    def get_items(self) -> list:
+        return self.board['entities']['items']
 
     def get_s(self):
         return self.ground
@@ -870,6 +909,12 @@ else:
     screen = pygame.display.set_mode(size)
 
 pygame.display.set_caption('World')
+pygame.mouse.set_cursor((16, 16), (0, 0), (
+    135, 135, 135, 135, 135, 41, 41, 41, 41, 41, 41, 41, 41, 135, 122, 135, 41, 41, 41, 41, 41, 41, 41, 41, 135, 110,
+    116,
+    41, 41, 41, 41, 41), (64, 0, 224, 0, 240, 0, 248, 0, 252, 0, 254, 0, 255, 0, 255, 128, 255, 192, 255, 128, 254, 0,
+                          239,
+                          0, 79, 0, 7, 128, 7, 128, 3, 0))
 
 # ---------- TEXTURES ----------
 # Загрузка текстур фундаментальных блоков
@@ -921,8 +966,15 @@ start_time_m = time.time()
 tmp = World(0, (0, 0), 10)
 # noise_random.seed(10)
 
-
+# pprint(TEXTURES['clothes']["viser"])
+# hren = list()
+# for i in pygame.image.tostring(pygame.image.load('res/image/clothes/viser/item.png').convert(), "RGB", False)[::3]:
+#     hren.append(i)
+#     print(pygame.image.load('res/image/clothes/viser/item.png').convert().get_size())
+# from pyperclip import copy as cop
+# cop(str(tuple(hren)))
 tmp.init()
+tmp.add_item(Item(pygame.image.load(r'res\image\items\0025.jpg').convert_alpha(), (10, 10), 0, ['fsdf', 'afsdf']))
 ui = UI(100)
 # tmp.save_world()
 print("--- %s seconds --- MAIN" % (time.time() - start_time_m))
@@ -936,7 +988,7 @@ if __name__ == '__main__':
 
     main_running = True
     while main_running:
-        pl.print_cord()
+        # pl.print_cord()
         # world_noise = PerlinNoiseFactory(2, octaves=4, unbias=False, seed=random.randint(1, 55))
         # tmp = World(0, (0, 0))
         # tmp.init()
